@@ -1,0 +1,10 @@
+[
+  {"model": "delivery.category", "pk": 1, "fields": {"name": "Пицца", "sort_order": 1}},
+  {"model": "delivery.category", "pk": 2, "fields": {"name": "Напитки", "sort_order": 2}},
+  {"model": "delivery.product", "pk": 1, "fields": {"name": "Маргарита", "description": "Томатный соус, моцарелла, базилик", "price": "2900.00", "category": 1, "is_available": true}},
+  {"model": "delivery.product", "pk": 2, "fields": {"name": "Пепперони", "description": "Томатный соус, моцарелла, пепперони", "price": "3400.00", "category": 1, "is_available": true}},
+  {"model": "delivery.product", "pk": 3, "fields": {"name": "Айран 0,5 л", "description": "", "price": "450.00", "category": 2, "is_available": true}},
+  {"model": "delivery.product", "pk": 4, "fields": {"name": "Морс клюквенный", "description": "Домашний, 0,4 л", "price": "700.00", "category": 2, "is_available": true}},
+  {"model": "delivery.faq", "pk": 1, "fields": {"question": "Сколько стоит доставка?", "answer": "Доставка по городу — 500 ₸, от 10 000 ₸ бесплатно.", "language": "ru"}},
+  {"model": "delivery.faq", "pk": 2, "fields": {"question": "Как долго ждать заказ?", "answer": "Обычно 40–60 минут.", "language": "ru"}}
+]
