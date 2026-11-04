@@ -1,5 +1,6 @@
 import html
 
+from aiogram.fsm.context import FSMContext
 from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
@@ -44,7 +45,7 @@ async def show_products(callback: CallbackQuery, callback_data: CategoryCallback
 
 
 @router.callback_query(ProductCallback.filter())
-async def show_product(callback: CallbackQuery, callback_data: ProductCallback):
+async def show_product(callback: CallbackQuery, callback_data: ProductCallback, state: FSMContext):
     product = await get_product(callback_data.id)
     if product is None:
         await callback.answer("Товар больше недоступен", show_alert=True)
@@ -54,5 +55,7 @@ async def show_product(callback: CallbackQuery, callback_data: ProductCallback):
         parts.append(html.escape(product.description))
     parts.append(f"Цена: {product.price:.0f} ₸")
     text = "\n\n".join(parts)
-    await callback.message.edit_text(text, reply_markup=product_keyboard(product))
+    data = await state.get_data()
+    qty = data.get("cart", {}).get(str(product.id), 0)
+    await callback.message.edit_text(text, reply_markup=product_keyboard(product, qty))
     await callback.answer()
