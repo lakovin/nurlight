@@ -11,7 +11,7 @@ from aiogram import Bot, Dispatcher  # noqa: E402
 from aiogram.client.default import DefaultBotProperties  # noqa: E402
 from aiogram.enums import ParseMode  # noqa: E402
 
-from bot.handlers import catalog, start  # noqa: E402
+from bot.handlers import cart, catalog, start  # noqa: E402
 
 
 async def main():
@@ -22,7 +22,7 @@ async def main():
 
     bot = Bot(token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp = Dispatcher()
-    dp.include_routers(start.router, catalog.router)
+    dp.include_routers(start.router, catalog.router, cart.router)
     await dp.start_polling(bot)
 
 
