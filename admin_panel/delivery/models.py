@@ -95,11 +95,19 @@ class Order(models.Model):
         verbose_name = "Заказ"
         verbose_name_plural = "Заказы"
         ordering = ["-created_at"]
+        permissions = [("view_statistics", "Может смотреть статистику")]
+
+    # Статусы, после которых заказ уже не меняется
+    FINAL_STATUSES = (Status.DELIVERED, Status.CANCELLED)
 
     @property
     def number(self):
         # Номер заказа для клиента — тот же id, но в читаемом виде
         return f"{self.pk:06d}"
+
+    def recalculate_total(self):
+        self.total = sum((item.price * item.quantity for item in self.items.all()), start=0)
+        self.save(update_fields=["total", "updated_at"])
 
     def __str__(self):
         return f"Заказ №{self.number}"
