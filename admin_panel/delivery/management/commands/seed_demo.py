@@ -7,9 +7,10 @@ python manage.py seed_demo --orders 100
 import random
 from datetime import timedelta
 
+from django.conf import settings
 from django.contrib.auth.models import Group, User
 from django.core.management import call_command
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
 
@@ -37,6 +38,9 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, orders, seed, **options):
+        # Демо-пользователи с известным паролем не должны попасть в открытую панель
+        if not settings.DEBUG:
+            raise CommandError("seed_demo работает только при DJANGO_DEBUG=1")
         rng = random.Random(seed)
         call_command("loaddata", "demo_catalog", verbosity=0)
         products = list(Product.objects.filter(is_available=True))

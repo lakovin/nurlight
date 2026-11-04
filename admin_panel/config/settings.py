@@ -10,9 +10,19 @@ REPO_DIR = BASE_DIR.parent
 # Один .env в корне репозитория — общий для бота и панели
 load_dotenv(REPO_DIR / ".env")
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-insecure-key")
 DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY") or ("dev-insecure-key" if DEBUG else None)
+if not SECRET_KEY:
+    raise RuntimeError("DJANGO_SECRET_KEY обязателен при DJANGO_DEBUG=0")
 ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+# Для работы через HTTPS-домен, например https://nurlight.moji.rest
+CSRF_TRUSTED_ORIGINS = [o for o in os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if o]
+
+if not DEBUG:
+    # HTTPS завершается на Cloudflare, до Django запрос доходит по HTTP через туннель
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -27,6 +37,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -74,5 +85,14 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    # Сжатые файлы с хешем в имени нужны только в боевом режиме, после collectstatic
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+        if DEBUG
+        else "whitenoise.storage.CompressedManifestStaticFilesStorage"
+    },
+}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
