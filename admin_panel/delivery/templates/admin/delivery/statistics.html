@@ -1,0 +1,147 @@
+{% extends "admin/base_site.html" %}
+{% load humanize %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  .stats-periods { margin: 0 0 20px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .stats-periods a { padding: 6px 14px; border: 1px solid var(--border-color); border-radius: 16px; text-decoration: none; }
+  .stats-periods a.active { background: var(--primary); border-color: var(--primary); color: var(--primary-fg); }
+  .stats-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .stats-card { border: 1px solid var(--border-color); border-radius: 6px; padding: 14px 16px; background: var(--darkened-bg); }
+  .stats-card .label { color: var(--body-quiet-color); font-size: 12px; text-transform: uppercase; letter-spacing: .03em; }
+  .stats-card .value { font-size: 26px; font-weight: 600; margin-top: 6px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .stats-card .hint { color: var(--body-quiet-color); font-size: 12px; margin-top: 2px; }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px; }
+  .stats-section h2 { margin: 0 0 10px; }
+  .stats-section table { width: 100%; }
+  .stats-section td.num, .stats-section th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .stats-chart { display: flex; align-items: flex-end; gap: 2px; height: 160px; padding: 8px 0; border-bottom: 1px solid var(--border-color); margin-bottom: 24px; }
+  .stats-chart .bar { flex: 1; background: var(--primary); border-radius: 2px 2px 0 0; min-height: 1px; position: relative; }
+  .stats-chart .bar:hover { opacity: .8; }
+  .stats-chart-axis { display: flex; justify-content: space-between; color: var(--body-quiet-color); font-size: 12px; margin-top: -18px; margin-bottom: 24px; }
+  .stats-meter { height: 6px; background: var(--border-color); border-radius: 3px; overflow: hidden; min-width: 80px; }
+  .stats-meter span { display: block; height: 100%; background: var(--primary); }
+  .stats-empty { color: var(--body-quiet-color); }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Начало</a>
+  &rsaquo; <a href="{% url 'admin:app_list' app_label='delivery' %}">Доставка</a>
+  &rsaquo; <a href="{% url 'admin:delivery_order_changelist' %}">Заказы</a>
+  &rsaquo; Статистика
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <div class="stats-periods">
+    {% for key, label in periods %}
+      <a href="?period={{ key }}"{% if key == period %} class="active"{% endif %}>{{ label }}</a>
+    {% endfor %}
+  </div>
+
+  <div class="stats-cards">
+    <div class="stats-card">
+      <div class="label">Заказов</div>
+      <div class="value">{{ stats.count|intcomma }}</div>
+      <div class="hint">в работе: {{ stats.in_progress }}</div>
+    </div>
+    <div class="stats-card">
+      <div class="label">Доставлено</div>
+      <div class="value">{{ stats.delivered|intcomma }}</div>
+    </div>
+    <div class="stats-card">
+      <div class="label">Выручка</div>
+      <div class="value">{{ stats.revenue|floatformat:0|intcomma }} ₸</div>
+      <div class="hint">по доставленным заказам</div>
+    </div>
+    <div class="stats-card">
+      <div class="label">Средний чек</div>
+      <div class="value">{{ stats.average_check|floatformat:0|intcomma }} ₸</div>
+    </div>
+    <div class="stats-card">
+      <div class="label">Отменено</div>
+      <div class="value">{{ stats.cancelled|intcomma }}</div>
+      <div class="hint">{{ stats.cancel_rate }}% от всех</div>
+    </div>
+  </div>
+
+  <div class="stats-section">
+    <h2>Заказы по дням</h2>
+    {% if stats.daily_max %}
+      <div class="stats-chart">
+        {% for d in stats.daily %}
+          <div class="bar" style="height: {{ d.height }}%" title="{{ d.day|date:'d.m' }}: {{ d.count }}"></div>
+        {% endfor %}
+      </div>
+      <div class="stats-chart-axis">
+        <span>{{ stats.daily.0.day|date:"d.m" }}</span>
+        <span>максимум {{ stats.daily_max }} в день</span>
+        {% with last_day=stats.daily|last %}<span>{{ last_day.day|date:"d.m" }}</span>{% endwith %}
+      </div>
+    {% else %}
+      <p class="stats-empty">За этот период заказов не было.</p>
+    {% endif %}
+  </div>
+
+  <div class="stats-grid">
+    <div class="stats-section">
+      <h2>По статусам</h2>
+      <table>
+        <tbody>
+        {% for s in stats.by_status %}
+          <tr>
+            <td>{{ s.label }}</td>
+            <td><div class="stats-meter"><span style="width: {{ s.percent }}%"></span></div></td>
+            <td class="num">{{ s.count }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="stats-section">
+      <h2>Популярные товары</h2>
+      {% if stats.top_products %}
+      <table>
+        <thead><tr><th>Товар</th><th class="num">Штук</th><th class="num">Сумма, ₸</th></tr></thead>
+        <tbody>
+        {% for p in stats.top_products %}
+          <tr>
+            <td>{{ p.product__name }}</td>
+            <td class="num">{{ p.units }}</td>
+            <td class="num">{{ p.revenue|floatformat:0|intcomma }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+        <p class="stats-empty">Нет данных.</p>
+      {% endif %}
+    </div>
+
+    <div class="stats-section">
+      <h2>Курьеры</h2>
+      {% if stats.couriers %}
+      <table>
+        <thead><tr><th>Курьер</th><th class="num">Доставлено</th><th class="num">Сейчас везёт</th></tr></thead>
+        <tbody>
+        {% for c in stats.couriers %}
+          <tr>
+            <td>{{ c.name }}{% if not c.is_active %} <span class="stats-empty">(неактивен)</span>{% endif %}</td>
+            <td class="num">{{ c.delivered }}</td>
+            <td class="num">{{ c.active }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+        <p class="stats-empty">Курьеров пока нет.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

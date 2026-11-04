@@ -1,0 +1,8 @@
+{% extends "admin/change_list.html" %}
+
+{% block object-tools-items %}
+  {% if can_view_statistics %}
+    <li><a href="{% url 'admin:delivery_order_statistics' %}">Статистика</a></li>
+  {% endif %}
+  {{ block.super }}
+{% endblock %}
