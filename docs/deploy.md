@@ -2,7 +2,12 @@
 
 Панель и бот работают на Mac Нурдаулета, а снаружи открываются через Cloudflare Tunnel
 по адресу https://nurlight.moji.rest. Порты на роутере не открываются, HTTPS даёт Cloudflare.
-Сайт доступен, пока Mac включён и запущен скрипт.
+Сайт поднимается сам при входе в macOS и перезапускается при падении; недоступен, только пока
+Mac выключен или спит.
+
+Боевая копия живёт отдельно от рабочей: `~/nurlight-server` — клон репозитория с GitHub,
+в нём `prod.sqlite3` и `deploy/public.env`. Папка `~/Documents` не подходит: macOS не пускает
+туда фоновые службы. Разработка по-прежнему идёт в своей папке.
 
 ```
 Клиент Telegram ──► серверы Telegram ◄── бот (polling) ─┐
@@ -13,6 +18,9 @@
 ## Однократная настройка
 
 ```bash
+git clone https://github.com/lakovin/nurlight.git ~/nurlight-server
+cd ~/nurlight-server
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 brew install cloudflared
 cloudflared tunnel login                               # в браузере выбрать moji.rest
 cloudflared tunnel create nurlight
@@ -33,12 +41,24 @@ set -a; . deploy/public.env; set +a
 
 ## Запуск
 
+Автозапуск (один раз, из `~/nurlight-server`):
+
 ```bash
-./deploy/start_public.sh
+./deploy/install_autostart.sh            # включить
+./deploy/install_autostart.sh --remove   # выключить
 ```
 
-Скрипт применяет миграции, собирает статику и запускает три процесса: панель (gunicorn),
-бота (если задан `BOT_TOKEN`) и туннель. Ctrl+C останавливает всё.
+Служба запускает `deploy/start_public.sh`: миграции, сборка статики, затем панель (gunicorn),
+бот (если задан `BOT_TOKEN`) и туннель. Лог — `~/Library/Logs/nurlight.log`.
+
+Обновить сайт после новых коммитов:
+
+```bash
+cd ~/nurlight-server && git pull && .venv/bin/pip install -r requirements.txt
+launchctl kickstart -k gui/$(id -u)/rest.moji.nurlight
+```
+
+Вручную, без автозапуска: `./deploy/start_public.sh`, Ctrl+C останавливает всё.
 
 ## Важно
 
