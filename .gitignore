@@ -12,3 +12,5 @@ staticfiles/
 
 .claude/
 deploy/public.env
+.neon
+.env.local
