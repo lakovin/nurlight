@@ -6,14 +6,18 @@
 Mac выключен или спит.
 
 Боевая копия живёт отдельно от рабочей: `~/nurlight-server` — клон репозитория с GitHub,
-в нём `prod.sqlite3` и `deploy/public.env`. Папка `~/Documents` не подходит: macOS не пускает
+в нём `deploy/public.env`. Папка `~/Documents` не подходит: macOS не пускает
 туда фоновые службы. Разработка по-прежнему идёт в своей папке.
 
 ```
-Клиент Telegram ──► серверы Telegram ◄── бот (polling) ─┐
-                                                        ├─ prod.sqlite3
-Оператор ──HTTPS──► Cloudflare ──туннель──► gunicorn ───┘   (панель Django)
+Клиент Telegram ──► серверы Telegram ◄── бот (у Нурадыла) ──┐
+                                                             ├─ PostgreSQL в Neon
+Оператор ──HTTPS──► Cloudflare ──туннель──► gunicorn ────────┘   (проект nurlight, Франкфурт)
 ```
+
+База — облачный PostgreSQL в Neon, общий для панели и бота: строка подключения стоит в
+`DATABASE_URL` в `deploy/public.env` (в кавычках — в ней есть `&`). Резервная копия прежней
+SQLite-базы — `~/nurlight-server/backups/`.
 
 ## Однократная настройка
 
@@ -62,9 +66,11 @@ launchctl kickstart -k gui/$(id -u)/rest.moji.nurlight
 
 ## Важно
 
-- Боевая база `prod.sqlite3` отдельная от `db.sqlite3` для разработки. Команда `seed_demo`
+- Боевая база (Neon) отдельная от `db.sqlite3` для разработки. Команда `seed_demo`
   в боевом режиме не работает, чтобы в открытую панель не попали демо-пароли.
-- Один токен бота нельзя запускать в двух местах одновременно: пока бот работает здесь,
-  разработчик запускает у себя отдельного тестового бота со своим токеном.
+- Резервная копия боевой базы: `set -a; . deploy/public.env; set +a`, затем
+  `.venv/bin/python admin_panel/manage.py dumpdata --natural-foreign --natural-primary -e contenttypes -e auth.permission -e sessions -o backups/<дата>.json`.
+- Один токен бота нельзя запускать в двух местах одновременно. Основной бот работает у Нурадыла,
+  поэтому `BOT_TOKEN` в `deploy/public.env` здесь пустой.
 - `deploy/public.env` содержит секреты и в git не попадает.
 - Переезд на VPS: те же шаги на сервере; `TUNNEL_NAME` и DNS остаются прежними.
