@@ -11,7 +11,7 @@ from aiogram import Bot, Dispatcher  # noqa: E402
 from aiogram.client.default import DefaultBotProperties  # noqa: E402
 from aiogram.enums import ParseMode  # noqa: E402
 
-from bot.handlers import cart, catalog, my_orders, order, start  # noqa: E402
+from bot.handlers import ai_agent, cart, catalog, my_orders, order, start  # noqa: E402
 
 
 async def main():
@@ -36,12 +36,13 @@ async def main():
 
     # Подключаем обработчики Telegram
     dp.include_routers(
-        order.router,
-        my_orders.router,
-        start.router,
-        catalog.router,
-        cart.router,
-    )
+    order.router,
+    my_orders.router,
+    start.router,
+    catalog.router,
+    cart.router,
+    ai_agent.router,
+)
 
     await dp.start_polling(bot)
 
