@@ -6,10 +6,7 @@ from aiogram.filters.callback_data import CallbackData
 from aiogram.types import CallbackQuery, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from bot.services.faq import (
-    get_faq_questions,
-    get_faq_answer,
-)
+from bot.services.faq import get_faq_questions, get_faq_answer
 
 router = Router()
 
@@ -19,10 +16,30 @@ FAQ_BUTTON = "❓ Частые вопросы"
 class FAQCallback(CallbackData, prefix="faq"):
     action: str
     faq_id: int = 0
+    language: str = "ru"
 
 
-def faq_keyboard(questions: list[dict]):
-    """Создаёт кнопки с вопросами."""
+def language_keyboard():
+    builder = InlineKeyboardBuilder()
+
+    builder.button(
+        text="🇷🇺 Русский",
+        callback_data=FAQCallback(
+            action="language", language="ru"
+        ),
+    )
+    builder.button(
+        text="🇰🇿 Қазақша",
+        callback_data=FAQCallback(
+            action="language", language="kk"
+        ),
+    )
+
+    builder.adjust(1)
+    return builder.as_markup()
+
+
+def faq_keyboard(questions: list[dict], language: str):
     builder = InlineKeyboardBuilder()
 
     for item in questions:
@@ -31,59 +48,110 @@ def faq_keyboard(questions: list[dict]):
             callback_data=FAQCallback(
                 action="answer",
                 faq_id=item["id"],
+                language=language,
             ),
         )
+
+    builder.button(
+        text="⬅️ Тілді өзгерту" if language == "kk"
+        else "⬅️ Сменить язык",
+        callback_data=FAQCallback(action="choose"),
+    )
 
     builder.adjust(1)
     return builder.as_markup()
 
 
-def back_keyboard():
-    """Кнопка возврата к списку вопросов."""
+def back_keyboard(language: str):
     builder = InlineKeyboardBuilder()
 
     builder.button(
-        text="⬅️ Назад к вопросам",
-        callback_data=FAQCallback(action="back"),
+        text="⬅️ Сұрақтарға оралу" if language == "kk"
+        else "⬅️ Назад к вопросам",
+        callback_data=FAQCallback(
+            action="back", language=language
+        ),
     )
 
     return builder.as_markup()
 
 
-@router.message(Command("faq"))
-@router.message(F.text == FAQ_BUTTON)
-async def show_faq(message: Message):
-    """Показывает список часто задаваемых вопросов."""
+async def display_questions(callback: CallbackQuery, language: str):
+    questions = await get_faq_questions(language=language)
 
-    questions = await get_faq_questions()
-
-    if not questions:
-        await message.answer(
-            "❓ Пока нет доступных вопросов."
+    if language == "kk":
+        title = (
+            "❓ <b>Nurlight жиі қойылатын сұрақтар</b>\n\n"
+            "Қажетті сұрақты таңдаңыз:"
         )
-        return
+        empty = "❓ Әзірге сұрақтар жоқ."
+    else:
+        title = (
+            "❓ <b>Частые вопросы Nurlight</b>\n\n"
+            "Выберите интересующий вопрос:"
+        )
+        empty = "❓ Пока нет доступных вопросов."
 
-    await message.answer(
-        "❓ <b>Частые вопросы Nurlight</b>\n\n"
-        "Выберите интересующий вопрос:",
-        reply_markup=faq_keyboard(questions),
+    await callback.message.edit_text(
+        title if questions else empty,
+        reply_markup=faq_keyboard(questions, language)
+        if questions else language_keyboard(),
     )
 
 
-@router.callback_query(
-    FAQCallback.filter(F.action == "answer")
-)
+@router.message(Command("faq"))
+@router.message(F.text == FAQ_BUTTON)
+async def show_faq(message: Message):
+    await message.answer(
+        "❓ <b>Частые вопросы Nurlight</b>\n\n"
+        "Выберите язык / Тілді таңдаңыз:",
+        reply_markup=language_keyboard(),
+    )
+
+
+@router.callback_query(FAQCallback.filter(F.action == "choose"))
+async def choose_language(callback: CallbackQuery):
+    await callback.message.edit_text(
+        "❓ <b>Частые вопросы Nurlight</b>\n\n"
+        "Выберите язык / Тілді таңдаңыз:",
+        reply_markup=language_keyboard(),
+    )
+    await callback.answer()
+
+
+@router.callback_query(FAQCallback.filter(F.action == "language"))
+async def select_language(
+    callback: CallbackQuery,
+    callback_data: FAQCallback,
+):
+    if callback_data.language not in ("ru", "kk"):
+        await callback.answer("Недоступный язык", show_alert=True)
+        return
+
+    await display_questions(callback, callback_data.language)
+    await callback.answer()
+
+
+@router.callback_query(FAQCallback.filter(F.action == "answer"))
 async def show_answer(
     callback: CallbackQuery,
     callback_data: FAQCallback,
 ):
-    """Показывает ответ из базы Django."""
+    language = callback_data.language
 
-    item = await get_faq_answer(callback_data.faq_id)
+    if language not in ("ru", "kk"):
+        await callback.answer("Недоступный язык", show_alert=True)
+        return
+
+    item = await get_faq_answer(
+        callback_data.faq_id,
+        language=language,
+    )
 
     if item is None:
         await callback.answer(
-            "Вопрос больше не доступен.",
+            "Сұрақ табылмады." if language == "kk"
+            else "Вопрос больше не доступен.",
             show_alert=True,
         )
         return
@@ -95,29 +163,21 @@ async def show_answer(
 
     await callback.message.edit_text(
         text,
-        reply_markup=back_keyboard(),
+        reply_markup=back_keyboard(language),
     )
-
     await callback.answer()
 
 
-@router.callback_query(
-    FAQCallback.filter(F.action == "back")
-)
-async def back_to_faq(callback: CallbackQuery):
-    """Возвращает клиента к вопросам."""
+@router.callback_query(FAQCallback.filter(F.action == "back"))
+async def back_to_faq(
+    callback: CallbackQuery,
+    callback_data: FAQCallback,
+):
+    language = callback_data.language
 
-    questions = await get_faq_questions()
+    if language not in ("ru", "kk"):
+        await callback.answer("Недоступный язык", show_alert=True)
+        return
 
-    if not questions:
-        await callback.message.edit_text(
-            "❓ Пока нет доступных вопросов."
-        )
-    else:
-        await callback.message.edit_text(
-            "❓ <b>Частые вопросы Nurlight</b>\n\n"
-            "Выберите интересующий вопрос:",
-            reply_markup=faq_keyboard(questions),
-        )
-
+    await display_questions(callback, language)
     await callback.answer()
