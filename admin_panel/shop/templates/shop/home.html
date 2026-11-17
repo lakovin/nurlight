@@ -1,0 +1,79 @@
+{% extends "shop/base.html" %}
+{% load shop_tags %}
+{% block content %}
+<section class="container hero">
+  <div class="hero-text">
+    <span class="pill">Доставка по городу</span>
+    <h1>Горячая пицца и напитки — прямо к вашей двери</h1>
+    <p class="muted">Выберите блюда на сайте, оформите заказ за минуту и следите за его статусом онлайн. Оператор подтвердит заказ сразу после оформления.</p>
+    <div class="actions">
+      <a class="btn btn-primary" href="{% url 'shop:catalog' %}">Смотреть меню</a>
+      {% if shop.bot_username %}<a class="btn btn-secondary" href="https://t.me/{{ shop.bot_username }}">Заказать в Telegram</a>{% endif %}
+    </div>
+  </div>
+  <div class="hero-art">
+    {% include "shop/icons/dish.svg" %}
+    <a class="card hero-toast" href="{% url 'shop:order_lookup' %}" style="text-decoration:none">
+      {% include "shop/icons/truck.svg" %}
+      <span><span class="label">Где мой заказ?</span><br><span class="small muted">Статус по номеру заказа</span></span>
+    </a>
+  </div>
+</section>
+
+{% if categories %}
+<section class="container" style="padding-bottom:32px">
+  <div class="section-head">
+    <h2>Меню</h2>
+    <a class="btn btn-secondary" href="{% url 'shop:catalog' %}">Весь каталог</a>
+  </div>
+  <div class="categories">
+    {% for category in categories %}
+    <a class="card category" href="{% url 'shop:catalog' %}?category={{ category.pk }}">
+      <span class="tile">{% with icon=category|product_icon %}{% include "shop/icons/"|add:icon|add:".svg" %}{% endwith %}</span>
+      <div><h3>{{ category.name }}</h3><span class="small muted">{{ category.product_count }} {{ category.product_count|plural_ru:"позиция,позиции,позиций" }}</span></div>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if popular %}
+<section class="container" style="padding-block:32px 64px">
+  <h2 style="margin-bottom:24px">Популярное</h2>
+  <div class="products">
+    {% for product in popular %}{% include "shop/_product.html" %}{% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="how section" id="how">
+  <div class="container">
+    <h2 style="margin-bottom:24px">Как заказать</h2>
+    <div class="steps">
+      <div class="card step">{% include "shop/icons/cart.svg" %}<h3>1. Выберите блюда</h3><p class="small muted">Добавьте товары в корзину из меню.</p></div>
+      <div class="card step">{% include "shop/icons/phone.svg" %}<h3>2. Оформите заказ</h3><p class="small muted">Укажите адрес, телефон и комментарий для курьера.</p></div>
+      <div class="card step">{% include "shop/icons/truck.svg" %}<h3>3. Следите за статусом</h3><p class="small muted">Новый → Принят → Передан курьеру → В пути → Доставлен.</p></div>
+    </div>
+  </div>
+</section>
+
+{% if faqs %}
+<section class="container section" id="faq">
+  <h2 style="margin-bottom:24px">Вопросы и ответы</h2>
+  <div class="faq">
+    {% for faq in faqs %}
+    <details class="card"><summary>{{ faq.question }}</summary><p class="muted">{{ faq.answer|linebreaksbr }}</p></details>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if shop.bot_username %}
+<section class="container" style="padding-bottom:80px">
+  <div class="banner">
+    <div><h2>Удобнее в Telegram?</h2><p>Тот же каталог и заказы в боте @{{ shop.bot_username }}. Статус придёт сообщением.</p></div>
+    <a class="btn btn-secondary" href="https://t.me/{{ shop.bot_username }}">Открыть бота</a>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

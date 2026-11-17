@@ -1,0 +1,53 @@
+{% extends "shop/base.html" %}
+{% load shop_tags %}
+{% block title %}Заказ №{{ order.number }} — Nurlight{% endblock %}
+{% block content %}
+<div class="container order-page">
+  <section class="card order-card">
+    <div class="order-head">
+      <div>
+        <h2>Заказ №{{ order.number }}</h2>
+        <p class="small muted" style="margin-top:6px">{{ order.created_at|date:"j E, H:i" }} · {{ order.address }}</p>
+      </div>
+      <span class="pill{% if order.status == 'delivered' %} success{% elif order.status == 'cancelled' %} danger{% endif %}">{{ order.get_status_display }}</span>
+    </div>
+
+    {% if steps %}
+    <ol class="timeline">
+      {% for step in steps %}
+      <li class="{{ step.state }}"{% if step.state == 'current' %} aria-current="step"{% endif %}>
+        <span class="dot"></span>
+        <div>
+          <p class="label">{{ step.label }}</p>
+          {% if step.hint %}<p class="small muted">{{ step.hint }}</p>{% endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ol>
+    <p class="small muted">Обновлено {{ order.updated_at|date:"j E в H:i" }}. Обновите страницу, чтобы увидеть новый статус.</p>
+    {% else %}
+    <p class="muted">Заказ отменён. Если это ошибка, свяжитесь с нами{% if shop.phone %} по телефону {{ shop.phone }}{% endif %}.</p>
+    {% endif %}
+
+    {% if show_courier %}
+    <hr class="divider">
+    <div class="courier">
+      <span class="tile">{% include "shop/icons/truck.svg" %}</span>
+      <div><p class="label">Курьер: {{ order.courier.name }}</p><p class="small muted">{{ order.courier.phone }}</p></div>
+      <a class="btn btn-secondary" href="tel:{{ order.courier.phone }}">Позвонить</a>
+    </div>
+    {% endif %}
+
+    <hr class="divider">
+    <div class="stack" style="gap:10px">
+      {% for item in order.items.all %}
+      <div class="row"><span class="muted">{{ item.product.name }} × {{ item.quantity }}</span><span>{{ item.price|times:item.quantity|money }}</span></div>
+      {% endfor %}
+      <div class="row"><h3>Итого</h3><h3>{{ order.total|money }}</h3></div>
+    </div>
+    {% if order.comment %}<p class="small muted">Комментарий: {{ order.comment }}</p>{% endif %}
+  </section>
+
+  <div class="actions"><a class="btn btn-secondary" href="{% url 'shop:catalog' %}">Вернуться в меню</a></div>
+</div>
+{% endblock %}

@@ -1,0 +1,6 @@
+<form class="lookup" method="get" action="{% url 'shop:order_lookup' %}" novalidate>
+  {% include "shop/_field.html" with field=form.number %}
+  {% include "shop/_field.html" with field=form.phone %}
+  <button class="btn btn-primary" type="submit">Найти</button>
+  {% for error in form.non_field_errors %}<p class="form-error" style="width:100%">{{ error }}</p>{% endfor %}
+</form>

@@ -1,0 +1,39 @@
+{% extends "shop/base.html" %}
+{% load shop_tags %}
+{% block title %}{{ current.name|default:"Меню" }} — Nurlight{% endblock %}
+{% block content %}
+<div class="container catalog">
+  <nav class="sidebar" aria-label="Категории">
+    <p class="label muted" style="padding:0 14px 6px">Категории</p>
+    <a class="chip" href="{% url 'shop:catalog' %}"{% if not current %} aria-current="page"{% endif %}>Все товары <span>{{ total_count }}</span></a>
+    {% for category in categories %}
+    <a class="chip" href="?category={{ category.pk }}"{% if current.pk == category.pk %} aria-current="page"{% endif %}>{{ category.name }} <span>{{ category.product_count }}</span></a>
+    {% endfor %}
+  </nav>
+
+  <div>
+    <div class="catalog-head">
+      <div>
+        <h2>{{ current.name|default:"Все товары" }}</h2>
+        <p class="small muted">{% if query %}По запросу «{{ query }}»: {% endif %}{{ products|length }} {{ products|length|plural_ru:"товар,товара,товаров" }}</p>
+      </div>
+      <form class="search" method="get" role="search">
+        {% if current %}<input type="hidden" name="category" value="{{ current.pk }}">{% endif %}
+        <div class="field"><label class="visually-hidden" for="q">Поиск по меню</label><input id="q" name="q" type="search" value="{{ query }}" placeholder="Поиск по меню"></div>
+        <button class="btn btn-secondary" type="submit">Найти</button>
+      </form>
+    </div>
+
+    {% if products %}
+    <div class="products">
+      {% for product in products %}{% include "shop/_product.html" %}{% endfor %}
+    </div>
+    {% else %}
+    <div class="card empty">
+      <h3>Ничего не нашлось</h3>
+      <p class="muted" style="margin-top:8px">Попробуйте другой запрос или <a href="{% url 'shop:catalog' %}">посмотрите всё меню</a>.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

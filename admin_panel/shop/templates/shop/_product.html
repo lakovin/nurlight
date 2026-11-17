@@ -1,0 +1,15 @@
+{% load shop_tags %}<article class="card product">
+  <div class="product-photo">{% with icon=product.category|product_icon %}{% include "shop/icons/"|add:icon|add:".svg" %}{% endwith %}</div>
+  <div class="product-body">
+    <h3>{{ product.name }}</h3>
+    <p class="small muted">{% if product.description %}{{ product.description }}{% else %}&nbsp;{% endif %}</p>
+    <div class="product-foot">
+      <span class="price">{{ product.price|money }}</span>
+      <form method="post" action="{% url 'shop:cart_add' product.pk %}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <button class="btn btn-primary" type="submit">В корзину</button>
+      </form>
+    </div>
+  </div>
+</article>

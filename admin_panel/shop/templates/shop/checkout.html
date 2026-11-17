@@ -1,0 +1,67 @@
+{% extends "shop/base.html" %}
+{% load shop_tags %}
+{% block title %}Корзина — Nurlight{% endblock %}
+{% block content %}
+<div class="container">
+  <h2 class="page-title">{% if lines %}Оформление заказа{% else %}Корзина{% endif %}</h2>
+
+  {% if not lines %}
+  <div class="card empty" style="margin-bottom:80px">
+    <h3>В корзине пока пусто</h3>
+    <p class="muted" style="margin:8px 0 20px">Загляните в меню и добавьте что-нибудь вкусное.</p>
+    <a class="btn btn-primary" href="{% url 'shop:catalog' %}">Перейти в меню</a>
+  </div>
+  {% else %}
+  <div class="checkout">
+    <div class="stack">
+      <section class="card">
+        <h3>Ваш заказ</h3>
+        <div class="lines">
+          {% for line in lines %}
+          <div class="line">
+            <span class="tile">{% with icon=line.product.category|product_icon %}{% include "shop/icons/"|add:icon|add:".svg" %}{% endwith %}</span>
+            <div class="line-name">
+              <p class="label">{{ line.product.name }}</p>
+              <p class="small muted">{{ line.product.price|money }} / шт.</p>
+            </div>
+            <form class="qty" method="post" action="{% url 'shop:cart_update' line.product.pk %}">
+              {% csrf_token %}
+              <button type="submit" name="action" value="dec" aria-label="Убрать одну штуку">−</button>
+              <span>{{ line.quantity }}</span>
+              <button type="submit" name="action" value="inc" aria-label="Добавить ещё одну">+</button>
+            </form>
+            <span class="line-sum">{{ line.sum|money }}</span>
+            <form method="post" action="{% url 'shop:cart_update' line.product.pk %}">
+              {% csrf_token %}
+              <button class="link-btn" type="submit" name="action" value="remove">Убрать</button>
+            </form>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="card">
+        <h3>Доставка</h3>
+        <form id="checkout" method="post" class="form-grid" novalidate>
+          {% csrf_token %}
+          {% for error in form.non_field_errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+          {% include "shop/_field.html" with field=form.name %}
+          {% include "shop/_field.html" with field=form.phone %}
+          {% include "shop/_field.html" with field=form.address %}
+          {% include "shop/_field.html" with field=form.comment %}
+        </form>
+      </section>
+    </div>
+
+    <aside class="card summary">
+      <h3>Итого</h3>
+      <div class="row"><span class="muted">Товары ({{ items_count }})</span><span>{{ total|money }}</span></div>
+      <hr class="divider">
+      <div class="row"><h3>К оплате</h3><h3>{{ total|money }}</h3></div>
+      <button class="btn btn-primary btn-block" type="submit" form="checkout">Подтвердить заказ</button>
+      <p class="small muted">Оплата курьеру при получении. После подтверждения оператор примет заказ, а статус появится на странице заказа.</p>
+    </aside>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

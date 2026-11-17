@@ -34,7 +34,15 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.humanize",
     "delivery",
+    "shop",
 ]
+
+# Контакты на сайте для клиентов; пустое значение — блок не показывается
+SHOP = {
+    "phone": os.getenv("SHOP_PHONE", ""),
+    "hours": os.getenv("SHOP_HOURS", ""),
+    "bot_username": os.getenv("TELEGRAM_BOT_USERNAME", "").lstrip("@"),
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -59,6 +67,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "shop.context_processors.shop",
             ],
         },
     },

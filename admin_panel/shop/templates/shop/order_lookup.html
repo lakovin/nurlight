@@ -1,0 +1,11 @@
+{% extends "shop/base.html" %}
+{% block title %}Отследить заказ — Nurlight{% endblock %}
+{% block content %}
+<div class="container order-page">
+  <div>
+    <h2>Отследить заказ</h2>
+    <p class="muted" style="margin-top:8px">Введите номер заказа и телефон, который указывали при оформлении.</p>
+  </div>
+  {% include "shop/_lookup_form.html" %}
+</div>
+{% endblock %}
