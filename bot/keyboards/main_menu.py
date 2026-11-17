@@ -4,6 +4,7 @@ CATALOG_BUTTON = "🛍 Каталог"
 CART_BUTTON = "🛒 Корзина"
 MY_ORDERS_BUTTON = "📦 Мои заказы"
 AI_BUTTON = "🤖 AI-помощник"
+FAQ_BUTTON = "❓ Частые вопросы"
 
 main_menu = ReplyKeyboardMarkup(
     keyboard=[
@@ -13,6 +14,7 @@ main_menu = ReplyKeyboardMarkup(
         ],
         [
             KeyboardButton(text=MY_ORDERS_BUTTON),
+            KeyboardButton(text=FAQ_BUTTON),
         ],
         [
             KeyboardButton(text=AI_BUTTON),
