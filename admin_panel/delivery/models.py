@@ -7,7 +7,8 @@ class Language(models.TextChoices):
 
 
 class Client(models.Model):
-    telegram_id = models.BigIntegerField("Telegram ID", unique=True)
+    # Пусто у клиентов, которые заказали через сайт и не писали боту
+    telegram_id = models.BigIntegerField("Telegram ID", unique=True, null=True, blank=True)
     name = models.CharField("Имя", max_length=255)
     phone = models.CharField("Телефон", max_length=32, blank=True)
     language = models.CharField("Язык", max_length=2, choices=Language.choices, default=Language.RU)
