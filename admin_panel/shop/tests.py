@@ -1,4 +1,6 @@
+import json
 from decimal import Decimal
+from unittest import mock
 
 from django.test import TestCase
 from django.urls import reverse
@@ -162,3 +164,61 @@ class OrderStatusTests(ShopTestCase):
         response = self.client.get(reverse("shop:order_status", args=[order.pk]))
         self.assertEqual(response.context["steps"], [])
         self.assertContains(response, "Заказ отменён")
+
+
+class AssistantTests(ShopTestCase):
+    url = "/assistant/"
+
+    def post(self, body):
+        return self.client.post(self.url, data=json.dumps(body), content_type="application/json")
+
+    def test_widget_on_every_page(self):
+        for name in ("shop:home", "shop:catalog", "shop:checkout", "shop:order_lookup"):
+            self.assertContains(self.client.get(reverse(name)), "Спросить ИИ")
+
+    def test_answer_and_history(self):
+        calls = []
+
+        async def fake_ask(question, history):
+            calls.append((question, list(history)))
+            return f"ответ на «{question}»", True
+
+        with mock.patch("shop.assistant.ask_ai", fake_ask):
+            first = self.post({"message": "Что взять?"}).json()
+            self.post({"message": "А дешевле?"})
+        self.assertEqual(first, {"answer": "ответ на «Что взять?»", "ok": True})
+        self.assertEqual(calls[1][1], [{"role": "user", "text": "Что взять?"}, {"role": "model", "text": "ответ на «Что взять?»"}])
+
+    def test_failed_answer_not_saved(self):
+        async def fail(question, history):
+            return "⚠️ Сейчас не удалось связаться с AI.", False
+
+        with mock.patch("shop.assistant.ask_ai", fail):
+            data = self.post({"message": "привет"}).json()
+        self.assertFalse(data["ok"])
+        self.assertEqual(self.client.session.get("assistant_history", []), [])
+
+    def test_clear_and_validation(self):
+        session = self.client.session
+        session["assistant_history"] = [{"role": "user", "text": "x"}]
+        session.save()
+        self.assertEqual(self.post({"action": "clear"}).status_code, 200)
+        self.assertEqual(self.client.session["assistant_history"], [])
+        self.assertEqual(self.post({"message": "  "}).status_code, 400)
+        self.assertEqual(self.post({"message": "a" * 1001}).status_code, 400)
+        self.assertEqual(self.client.get(self.url).status_code, 405)
+
+    def test_rate_limit(self):
+        async def fake_ask(question, history):
+            return "ок", True
+
+        with mock.patch("shop.assistant.ask_ai", fake_ask):
+            codes = [self.post({"message": f"вопрос {i}"}).status_code for i in range(21)]
+        self.assertEqual(codes[:20], [200] * 20)
+        self.assertEqual(codes[20], 429)
+
+    def test_requires_csrf(self):
+        from django.test import Client as HttpClient
+        strict = HttpClient(enforce_csrf_checks=True)
+        response = strict.post(self.url, data='{"message": "hi"}', content_type="application/json")
+        self.assertEqual(response.status_code, 403)

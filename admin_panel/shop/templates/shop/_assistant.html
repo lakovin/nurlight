@@ -1,0 +1,28 @@
+{% load static %}<div class="assistant" data-url="{% url 'shop:assistant' %}">
+  <button class="assistant-toggle btn btn-primary" type="button" aria-expanded="false" aria-controls="assistant-panel">
+    <span aria-hidden="true">✦</span> Спросить ИИ
+  </button>
+  <section class="assistant-panel card" id="assistant-panel" role="dialog" aria-label="AI-консультант Nurlight" hidden>
+    <header class="assistant-head">
+      <div>
+        <p class="label">AI-консультант</p>
+        <p class="small muted">Подскажет блюда, цены и как оформить заказ</p>
+      </div>
+      <div class="assistant-tools">
+        <button class="link-btn" type="button" data-action="clear">Новый диалог</button>
+        <button class="assistant-close" type="button" aria-label="Закрыть">×</button>
+      </div>
+    </header>
+    <div class="assistant-log" aria-live="polite">
+      <p class="bubble bot">Здравствуйте! Спросите, что заказать, сколько стоит или как оформить заказ.</p>
+    </div>
+    <form class="assistant-form">
+      {% csrf_token %}
+      <label class="visually-hidden" for="assistant-input">Ваш вопрос</label>
+      <input id="assistant-input" name="message" maxlength="1000" autocomplete="off" placeholder="Например: что взять на двоих?">
+      <button class="btn btn-primary" type="submit">Отправить</button>
+    </form>
+    <p class="assistant-note small muted">Отвечает ИИ (Gemini) — ответы могут быть неточными. Заказ оформляется через корзину.</p>
+  </section>
+</div>
+<script src="{% static 'shop/assistant.js' %}" defer></script>

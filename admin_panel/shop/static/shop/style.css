@@ -209,3 +209,27 @@ h3 { font-size: 20px; line-height: 1.3; font-weight: 600; }
   .line { flex-wrap: wrap; }
   .line-sum { width: auto; }
 }
+
+/* AI-консультант: кнопка в углу и окно чата */
+.assistant { position: fixed; right: 24px; bottom: 24px; z-index: 20; display: grid; justify-items: end; gap: 12px; }
+.assistant-toggle { box-shadow: 0 6px 20px rgba(31, 26, 23, .18); }
+.assistant-panel { display: flex; flex-direction: column; width: 360px; height: min(520px, calc(100vh - 120px)); padding: 0; overflow: hidden; box-shadow: 0 12px 40px rgba(31, 26, 23, .18); }
+.assistant-panel[hidden] { display: none; }
+.assistant-head { display: flex; justify-content: space-between; align-items: start; gap: 12px; padding: 16px 18px; border-bottom: 1px solid var(--border); }
+.assistant-tools { display: flex; align-items: center; gap: 12px; }
+.assistant-close { border: 0; background: none; font-size: 24px; line-height: 1; color: var(--muted); cursor: pointer; }
+.assistant-log { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 16px 18px; background: var(--bg); }
+.bubble { max-width: 85%; padding: 10px 14px; border-radius: 14px; font-size: 14px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+.bubble.bot { align-self: start; background: var(--surface); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+.bubble.user { align-self: end; background: var(--primary); color: #fff; border-bottom-right-radius: 4px; }
+.bubble.typing { color: var(--muted); }
+.bubble.error { color: var(--danger); }
+.assistant-form { display: flex; gap: 8px; padding: 12px 18px 6px; }
+.assistant-form input { flex: 1; min-width: 0; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 12px; font: inherit; font-size: 14px; }
+.assistant-form input:focus { border-color: var(--primary); outline: none; }
+.assistant-form .btn { padding: 10px 14px; }
+.assistant-note { padding: 0 18px 12px; font-size: 12px; }
+@media (max-width: 720px) {
+  .assistant { right: 16px; bottom: 16px; left: 16px; }
+  .assistant-panel { width: 100%; height: min(70vh, 520px); }
+}

@@ -1,13 +1,16 @@
+import json
+
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Q, Sum
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from delivery.models import FAQ, Category, Client, Order, OrderItem, Product
 
+from . import assistant
 from .cart import Cart
 from .forms import CheckoutForm, OrderLookupForm
 from .phones import normalize_phone
@@ -175,3 +178,24 @@ def order_status(request, pk):
             steps.append({"label": status.label, "hint": STEP_HINTS[status] if state != "todo" else "", "state": state})
     show_courier = order.courier and order.status in (Order.Status.HANDED_TO_COURIER, Order.Status.IN_TRANSIT)
     return render(request, "shop/order_status.html", {"order": order, "steps": steps, "show_courier": show_courier})
+
+
+@require_POST
+def assistant_chat(request):
+    """Окно AI-консультанта: {"message": "..."} → {"answer": "...", "ok": true}; {"action": "clear"} — новый диалог."""
+    try:
+        data = json.loads(request.body or b"{}")
+    except ValueError:
+        return JsonResponse({"error": "Неверный запрос"}, status=400)
+    if data.get("action") == "clear":
+        assistant.clear(request.session)
+        return JsonResponse({"ok": True})
+    question = str(data.get("message", "")).strip()
+    if not question:
+        return JsonResponse({"error": "Напишите вопрос"}, status=400)
+    if len(question) > assistant.MAX_QUESTION:
+        return JsonResponse({"error": f"Вопрос длиннее {assistant.MAX_QUESTION} символов"}, status=400)
+    if assistant.rate_limited(request.session):
+        return JsonResponse({"error": "Слишком много вопросов подряд. Попробуйте через несколько минут."}, status=429)
+    answer, ok = assistant.ask(request.session, question)
+    return JsonResponse({"answer": answer, "ok": ok})
