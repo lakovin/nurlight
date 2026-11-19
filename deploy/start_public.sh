@@ -26,7 +26,8 @@ else
     echo "BOT_TOKEN пуст — бот не запущен, работает только панель"
 fi
 
-cloudflared tunnel --no-autoupdate run --url "http://127.0.0.1:$PANEL_PORT" "$TUNNEL_NAME" &
+# HTTP/2 поверх TCP: QUIC (UDP, порт 7844) из домашней сети постоянно обрывается
+cloudflared tunnel --no-autoupdate --protocol http2 run --url "http://127.0.0.1:$PANEL_PORT" "$TUNNEL_NAME" &
 
 echo "Панель: https://nurlight.moji.rest"
 wait
