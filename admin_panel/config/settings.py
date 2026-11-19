@@ -79,7 +79,18 @@ WSGI_APPLICATION = "config.wsgi.application"
 _db_url = os.getenv("DATABASE_URL", "sqlite:///db.sqlite3")
 if _db_url.startswith("sqlite:///") and not _db_url.startswith("sqlite:////"):
     _db_url = f"sqlite:///{REPO_DIR / _db_url.removeprefix('sqlite:///')}"
-DATABASES = {"default": dj_database_url.parse(_db_url)}
+# DB_PERSISTENT=1 — держать соединение с базой открытым между запросами (быстрый режим).
+# С облачной базой новое подключение стоит ~2 с, повторное использование — ~0,1 с.
+# Перед каждым запросом соединение проверяется, так что после сна базы сайт просто переподключится.
+# Переключается командой deploy/db_mode.sh on|off.
+DB_PERSISTENT = os.getenv("DB_PERSISTENT", "0") == "1"
+DATABASES = {
+    "default": dj_database_url.parse(
+        _db_url,
+        conn_max_age=600 if DB_PERSISTENT else 0,
+        conn_health_checks=DB_PERSISTENT,
+    )
+}
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
