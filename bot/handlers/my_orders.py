@@ -76,27 +76,6 @@ async def show_orders(message: Message):
     )
 
 
-    orders = await get_client_orders(callback.from_user.id)
-
-    if not orders:
-        text = "📦 У вас пока нет заказов."
-        markup = None
-    else:
-        text = format_orders(orders)
-        markup = orders_keyboard(orders)
-
-    if callback.message.text != text:
-        await callback.message.edit_text(
-            text,
-            reply_markup=markup,
-        )
-
-        await callback.answer("Список заказов обновлён")
-    else:
-        await callback.answer("Изменений пока нет")
-
-
-
 @router.callback_query(
     MyOrderCallback.filter(F.action == "refresh")
 )
