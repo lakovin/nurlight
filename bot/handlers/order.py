@@ -12,6 +12,7 @@ from bot.keyboards.main_menu import main_menu
 from bot.keyboards.order import (
     CANCEL_BUTTON,
     NO_COMMENT_BUTTON,
+    KEEP_PHONE_PREFIX,
     OrderCallback,
     cancel_keyboard,
     comment_keyboard,
@@ -19,9 +20,11 @@ from bot.keyboards.order import (
     edit_keyboard,
     phone_keyboard,
     retry_keyboard,
+    saved_phone_keyboard,
 )
 from bot.services.orders import (
     create_order,
+    get_client_phone,
     reconcile_cart,
     save_client_phone,
 )
@@ -108,6 +111,7 @@ async def show_order_summary(
 
     lines.extend([
         "",
+        "🚚 Доставка: бесплатно",
         f"<b>Итого: {format_money(total)}</b>",
         f"📍 Адрес: {html.escape(data['address'])}",
         f"📱 Телефон: {html.escape(format_phone(data['phone']))}",
@@ -260,6 +264,23 @@ async def receive_address(
 
     await state.set_state(OrderForm.phone)
 
+    # Телефон уже есть в профиле — предлагаем оставить его или указать другой
+    saved_phone = await get_client_phone(message.from_user.id)
+
+    if saved_phone:
+        label = format_phone(saved_phone)
+
+        await state.update_data(saved_phone=saved_phone)
+
+        await message.answer(
+            "📱 <b>Шаг 2. Номер телефона</b>\n\n"
+            f"Ваш номер: <b>{html.escape(label)}</b>\n"
+            "Оставьте его кнопкой ниже или введите другой "
+            "(например: +7 777 123 45 67).",
+            reply_markup=saved_phone_keyboard(label),
+        )
+        return
+
     await message.answer(
         "📱 <b>Шаг 2. Номер телефона</b>\n\n"
         "Отправьте номер кнопкой или введите вручную.\n"
@@ -302,10 +323,30 @@ async def receive_contact(
         phone
     )
 
-    await state.update_data(
-        phone=phone,
-        phone_manual=False
-    )
+    await state.update_data(phone=phone)
+
+    await after_phone_received(message, state)
+
+
+@router.message(
+    OrderForm.phone,
+    F.text.startswith(KEEP_PHONE_PREFIX)
+)
+async def keep_saved_phone(
+    message: Message,
+    state: FSMContext
+) -> None:
+
+    data = await state.get_data()
+    phone = data.get("saved_phone")
+
+    if not phone:
+        await message.answer(
+            "Введите номер вручную или отправьте контакт кнопкой."
+        )
+        return
+
+    await state.update_data(phone=phone)
 
     await after_phone_received(message, state)
 
@@ -324,10 +365,13 @@ async def receive_phone(
         )
         return
 
-    await state.update_data(
-        phone=phone,
-        phone_manual=True
+    # Сохраняем в профиль в любом случае (решение №2 в сценариях)
+    await save_client_phone(
+        message.from_user.id,
+        phone
     )
+
+    await state.update_data(phone=phone)
 
     await after_phone_received(message, state)
 
@@ -569,16 +613,6 @@ async def confirm_order(
                 return
 
             comment = data.get("comment", "")
-
-            if data.get("phone_manual"):
-                phone_line = (
-                    f"Телефон для связи: {data['phone']}"
-                )
-
-                comment = (
-                    f"{phone_line}\n{comment}"
-                    if comment else phone_line
-                )
 
             order = await create_order(
                 telegram_id=user_id,

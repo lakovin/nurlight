@@ -38,6 +38,26 @@ phone_keyboard = ReplyKeyboardMarkup(
 )
 
 
+KEEP_PHONE_PREFIX = "✅ Оставить"
+
+
+# Телефон уже есть в профиле: оставить его, отправить другой или ввести вручную
+def saved_phone_keyboard(phone_label: str) -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text=f"{KEEP_PHONE_PREFIX} {phone_label}")],
+            [
+                KeyboardButton(
+                    text=SEND_PHONE_BUTTON,
+                    request_contact=True
+                )
+            ],
+            [KeyboardButton(text=CANCEL_BUTTON)]
+        ],
+        resize_keyboard=True
+    )
+
+
 # Кнопки для комментария
 comment_keyboard = ReplyKeyboardMarkup(
     keyboard=[
