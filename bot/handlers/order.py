@@ -2,13 +2,20 @@ import asyncio
 import html
 import logging
 
-from aiogram import F, Router
+from aiogram import BaseMiddleware, F, Router
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
 
 from bot.keyboards.cart import CartCallback
-from bot.keyboards.main_menu import main_menu
+from bot.keyboards.main_menu import (
+    AI_BUTTON,
+    CART_BUTTON,
+    CATALOG_BUTTON,
+    FAQ_BUTTON,
+    MY_ORDERS_BUTTON,
+    main_menu,
+)
 from bot.keyboards.order import (
     CANCEL_BUTTON,
     NO_COMMENT_BUTTON,
@@ -22,6 +29,7 @@ from bot.keyboards.order import (
     retry_keyboard,
     saved_phone_keyboard,
 )
+from bot.services.clients import get_or_register_client
 from bot.services.orders import (
     create_order,
     get_client_phone,
@@ -55,6 +63,48 @@ async def reset_checkout(state: FSMContext) -> None:
 
     if cart:
         await state.update_data(cart=cart)
+
+
+# Кнопки главного меню: нажатие во время оформления прерывает его
+MENU_BUTTONS = {
+    CATALOG_BUTTON,
+    CART_BUTTON,
+    MY_ORDERS_BUTTON,
+    FAQ_BUTTON,
+    AI_BUTTON,
+}
+
+
+class CheckoutInterruptMiddleware(BaseMiddleware):
+    """Команда или кнопка меню во время оформления прерывает его.
+
+    Корзина сохраняется, а сообщение идёт дальше к обычному обработчику,
+    поэтому /start, /cart или «🛍 Каталог» не попадают в адрес или комментарий.
+    """
+
+    async def __call__(self, handler, event: Message, data: dict):
+        text = event.text or ""
+        state = data.get("state")
+
+        if (
+            state is not None
+            and data.get("raw_state") in OrderForm.__all_states_names__
+            and (text.startswith("/") or text in MENU_BUTTONS)
+        ):
+            await reset_checkout(state)
+
+            # Дальше сообщение обрабатывается как вне оформления
+            data["raw_state"] = None
+
+            await event.answer(
+                "❌ Оформление прервано. Корзина сохранена.",
+                reply_markup=main_menu,
+            )
+
+        return await handler(event, data)
+
+
+router.message.outer_middleware(CheckoutInterruptMiddleware())
 
 
 async def show_order_summary(
@@ -159,6 +209,12 @@ async def start_checkout(
     callback: CallbackQuery,
     state: FSMContext
 ) -> None:
+
+    # Профиль клиента нужен до шага телефона: туда сохраняется номер
+    await get_or_register_client(
+        callback.from_user.id,
+        callback.from_user.full_name,
+    )
 
     data = await state.get_data()
 
@@ -616,6 +672,7 @@ async def confirm_order(
 
             order = await create_order(
                 telegram_id=user_id,
+                name=callback.from_user.full_name,
                 cart=cart,
                 address=data["address"],
                 comment=comment,
