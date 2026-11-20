@@ -10,7 +10,14 @@ db.sqlite3
 .vscode/
 staticfiles/
 
-.claude/
+# Claude Code: личные настройки не коммитим, общие (skill graphify, хуки, CLAUDE.md) — коммитим
+.claude/*
+!.claude/skills/
+!.claude/settings.json
+!.claude/CLAUDE.md
+
+# graphify: граф собирается локально командой `graphify update .` (~3 сек)
+graphify-out/
 deploy/public.env
 .neon
 .env.local

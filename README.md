@@ -103,3 +103,18 @@ python -m bot.main
 - бот: корзина, оформление заказа, «Мои заказы», уведомления, FAQ и связь с оператором —
   подробно в [docs/bot-guide.md](docs/bot-guide.md);
 - тестирование на 5–10 людях и расчёт экономического эффекта.
+
+## Граф кода (graphify)
+
+В репозитории настроен [graphify](https://github.com/Graphify-Labs/graphify): он строит граф
+знаний по коду и документам, и Claude Code ищет по нему, а не читает файлы подряд. Настройки
+лежат в `.claude/` и `CLAUDE.md`. Сам граф (`graphify-out/`) в git не хранится, каждый
+собирает его у себя:
+
+```bash
+uv tool install graphifyy   # или: pipx install graphifyy (пакет с двумя «y»)
+graphify update .           # собрать граф, ~3 секунды, без LLM и без затрат на API
+graphify query "как оформляется заказ"   # пример запроса
+```
+
+Граф без Claude Code тоже можно посмотреть: откройте `graphify-out/graph.html` в браузере.
