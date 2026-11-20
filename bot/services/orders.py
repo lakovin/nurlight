@@ -61,7 +61,8 @@ def create_order(
     telegram_id: int,
     cart: dict,
     address: str,
-    comment: str
+    comment: str,
+    name: str = ""
 ):
     """Создаёт заказ и его позиции в одной транзакции."""
 
@@ -70,8 +71,11 @@ def create_order(
 
     with transaction.atomic():
 
-        client = Client.objects.get(
-            telegram_id=telegram_id
+        # Клиента может не быть в базе (например, не нажимал /start
+        # или бот переключили на другую базу) — создаём профиль
+        client, _ = Client.objects.get_or_create(
+            telegram_id=telegram_id,
+            defaults={"name": name or "Клиент"},
         )
 
         products = {
