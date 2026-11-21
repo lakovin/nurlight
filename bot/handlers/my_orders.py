@@ -17,6 +17,7 @@ from bot.keyboards.my_orders import (
     orders_list_keyboard,
     retry_list_keyboard,
 )
+from bot.services.delivery import delivery_line
 from bot.services.my_orders import (
     ORDERS_LIMIT,
     cancel_by_client,
@@ -80,7 +81,7 @@ def format_order_card(order: dict) -> str:
     lines.extend([
         "",
         f"Товары: {format_money(order['total'])}",
-        "Доставка: бесплатно",
+        delivery_line(order["total"]),
         f"<b>Итого: {format_money(order['total'])}</b>",
         "",
         f"Адрес: {html.escape(order['address'])}",
