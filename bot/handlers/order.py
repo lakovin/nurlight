@@ -30,6 +30,7 @@ from bot.keyboards.order import (
     saved_phone_keyboard,
 )
 from bot.services.clients import get_or_register_client
+from bot.services.delivery import delivery_line
 from bot.services.orders import (
     create_order,
     get_client_phone,
@@ -161,7 +162,7 @@ async def show_order_summary(
 
     lines.extend([
         "",
-        "🚚 Доставка: бесплатно",
+        f"🚚 {delivery_line(total)}",
         f"<b>Итого: {format_money(total)}</b>",
         f"📍 Адрес: {html.escape(data['address'])}",
         f"📱 Телефон: {html.escape(format_phone(data['phone']))}",
