@@ -22,12 +22,6 @@
   <!-- Сцена с коробкой: высокий блок, внутри «прилипшая» сцена; прокрутка открывает крышку -->
   <section class="unbox" id="unbox">
     <div class="stage">
-      <div class="intro" data-fade="out">
-        <p class="eyebrow">Доставка по городу</p>
-        <h1>Что внутри?</h1>
-        <p class="hint">Прокрутите вниз <span class="arrow">↓</span></p>
-      </div>
-
       <div class="scene" aria-hidden="true">
         <div class="shadow"></div>
         <div class="box">
@@ -90,10 +84,18 @@
         </div>
       </div>
 
-      <div class="reveal" data-fade="in">
-        <h2>Горячая пицца — в один чат</h2>
-        <p>Меню, корзина, оплата картой и статус заказа — всё в Telegram-боте Nurlight. Без регистрации и приложений.</p>
-        <a class="btn" data-bot href="https://t.me/nurlight_delivery_bot">Заказать в Telegram</a>
+      <!-- Текст справа: сначала вопрос, после открытия коробки — ответ и кнопка -->
+      <div class="copy">
+        <div class="intro" data-fade="out">
+          <p class="eyebrow">Доставка по городу</p>
+          <h1>Что внутри?</h1>
+          <p class="hint">Прокрутите вниз <span class="arrow">↓</span></p>
+        </div>
+        <div class="reveal" data-fade="in">
+          <h2>Горячая пицца — в один чат</h2>
+          <p>Меню, корзина, оплата картой и статус заказа — всё в Telegram-боте Nurlight. Без регистрации и приложений.</p>
+          <a class="btn" data-bot href="https://t.me/nurlight_delivery_bot">Заказать в Telegram</a>
+        </div>
       </div>
     </div>
   </section>
@@ -111,10 +113,10 @@
     <section class="section">
       <h2 class="section-title">Почему через Telegram</h2>
       <div class="features">
-        <div class="card feature"><span class="emoji">⚡</span><h3>Без лишнего</h3><p>Не нужно ставить приложение и придумывать пароль.</p></div>
-        <div class="card feature"><span class="emoji">📦</span><h3>Заказ всегда под рукой</h3><p>«Мои заказы» в боте показывают состав и статус каждого заказа.</p></div>
-        <div class="card feature"><span class="emoji">🤖</span><h3>ИИ-консультант</h3><p>Спросите бота, что взять на компанию или сколько стоит доставка.</p></div>
-        <div class="card feature"><span class="emoji">🛵</span><h3>Доставка</h3><p>Бесплатно от 5 000 ₸. Для заказа меньше стоимость доставки уточнит оператор.</p></div>
+        <div class="card feature"><h3>Без лишнего</h3><p>Не нужно ставить приложение и придумывать пароль.</p></div>
+        <div class="card feature"><h3>Заказ всегда под рукой</h3><p>«Мои заказы» в боте показывают состав и статус каждого заказа.</p></div>
+        <div class="card feature"><h3>ИИ-консультант</h3><p>Спросите бота, что взять на компанию или сколько стоит доставка.</p></div>
+        <div class="card feature"><h3>Доставка</h3><p>Бесплатно от 5 000 ₸. Для заказа меньше стоимость доставки уточнит оператор.</p></div>
       </div>
     </section>
 
