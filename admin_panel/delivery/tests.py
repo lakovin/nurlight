@@ -188,6 +188,7 @@ class PaymentTests(DeliveryTestCase):
         order = self.make_order()
         payload = payments.invoice_payload(order)
         self.assertIn("Сумма", payments.check_before_payment(payload, 1, 100, "KZT"))
+        self.assertIn("не найден", payments.check_before_payment("pizza:1", 1, 290000, "KZT"))
         self.assertIn("не найден", payments.check_before_payment(payload, 999, 290000, "KZT"))
         self.assertIn("не найден", payments.check_before_payment("order:abc", 1, 290000, "KZT"))
         cancelled = self.make_order(status=Order.Status.CANCELLED)
@@ -222,3 +223,44 @@ class PaymentTests(DeliveryTestCase):
         order = Order.objects.get(address="старый бот")
         self.assertEqual(order.payment_status, Order.PaymentStatus.UNPAID)
         self.assertEqual(order.telegram_charge_id, "")
+
+    def pay_delivery(self, order, total=None, charge="tg_d1"):
+        total = payments.amount(order.delivery_price) if total is None else total
+        return payments.mark_paid(payments.delivery_invoice_payload(order), 1, total, "KZT", charge, "ch_d1")
+
+    def test_delivery_invoice_only_after_operator_sets_price(self):
+        order = self.make_order()
+        payload = payments.delivery_invoice_payload(order)
+        self.assertFalse(payments.delivery_due(order))
+        self.assertIn("не назначена", payments.check_before_payment(payload, 1, 50000, "KZT"))
+        order.delivery_price = Decimal("0")
+        self.assertFalse(payments.delivery_due(order))  # бесплатная доставка — счёт не нужен
+        order.delivery_price = Decimal("800")
+        order.save()
+        self.assertTrue(payments.delivery_due(order))
+        self.assertIsNone(payments.check_before_payment(payload, 1, 80000, "KZT"))
+        self.assertIn("Сумма", payments.check_before_payment(payload, 1, 290000, "KZT"))
+
+    def test_delivery_paid_separately_from_goods(self):
+        order = self.make_order()
+        order.delivery_price = Decimal("800")
+        order.save()
+        self.assertTrue(self.pay_delivery(order))
+        self.assertFalse(self.pay_delivery(order, charge="tg_d2"))  # повторное сообщение
+        order.refresh_from_db()
+        self.assertIsNotNone(order.delivery_paid_at)
+        self.assertEqual(order.delivery_telegram_charge_id, "tg_d1")
+        self.assertEqual(order.payment_status, Order.PaymentStatus.UNPAID)  # товары не тронуты
+        self.assertFalse(payments.delivery_due(order))
+        self.assertIn("уже оплачена", payments.check_before_payment(payments.delivery_invoice_payload(order), 1, 80000, "KZT"))
+        self.assertTrue(self.pay(order))  # товары оплачиваются своим счётом
+
+    def test_delivery_price_below_telegram_minimum_is_rejected(self):
+        from django.core.exceptions import ValidationError
+        order = self.make_order()
+        order.delivery_price = Decimal("500")
+        with self.assertRaises(ValidationError):
+            order.full_clean()
+        for ok in (Decimal("0"), Decimal("518"), Decimal("1000")):
+            order.delivery_price = ok
+            order.full_clean()
