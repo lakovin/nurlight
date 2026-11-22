@@ -20,6 +20,7 @@ from bot.handlers import (  # noqa: E402
     order,
     start,
 )
+from bot.services import notifications  # noqa: E402
 
 
 async def main():
@@ -52,7 +53,13 @@ async def main():
         ai_agent.router,
     )
 
-    await dp.start_polling(bot)
+    # Фоновая проверка статусов заказов: пишет клиентам об изменениях
+    notifier = asyncio.create_task(notifications.run(bot))
+
+    try:
+        await dp.start_polling(bot)
+    finally:
+        notifier.cancel()
 
 
 if __name__ == "__main__":
