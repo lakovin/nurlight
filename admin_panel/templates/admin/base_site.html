@@ -1,0 +1,35 @@
+{% extends "admin/base.html" %}
+{% load i18n %}
+{# Шапка админки: заголовок и переключатель языка RU / KZ / EN #}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block branding %}
+<div id="site-name"><a href="{% url 'admin:index' %}">{{ site_header|default:_('Django administration') }}</a></div>
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  .lang-switch { display: inline-flex; gap: 2px; margin-left: 12px; vertical-align: middle; }
+  .lang-switch button {
+    background: none; border: 1px solid transparent; border-radius: 4px; padding: 2px 6px;
+    color: var(--header-link-color); font: inherit; font-size: 11px; cursor: pointer; text-transform: uppercase;
+  }
+  .lang-switch button[aria-pressed="true"] { border-color: var(--header-link-color); }
+  .lang-switch button:hover { text-decoration: underline; }
+</style>
+{% endblock %}
+
+{% block userlinks %}
+{{ block.super }}
+{% get_current_language as LANGUAGE_CODE %}
+<form class="lang-switch" action="{% url 'set_language' %}" method="post">{% csrf_token %}
+  <input name="next" type="hidden" value="{{ request.get_full_path }}">
+  <button name="language" value="ru" title="Русский" aria-pressed="{% if LANGUAGE_CODE == 'ru' %}true{% else %}false{% endif %}">RU</button>
+  <button name="language" value="kk" title="Қазақша" aria-pressed="{% if LANGUAGE_CODE == 'kk' %}true{% else %}false{% endif %}">KZ</button>
+  <button name="language" value="en" title="English" aria-pressed="{% if LANGUAGE_CODE == 'en' %}true{% else %}false{% endif %}">EN</button>
+</form>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}

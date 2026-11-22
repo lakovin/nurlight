@@ -3,7 +3,7 @@
 | Адрес | Что | Где работает |
 |---|---|---|
 | https://nurlight.moji.rest | визитка (папка `landing/`) | Cloudflare Workers, бесплатно, не зависит от Mac |
-| https://nurlight-admin.moji.rest/admin/ | панель операторов (и старый сайт-магазин на `/`) | Mac Нурдаулета через Cloudflare Tunnel |
+| https://nurlight-admin.moji.rest/admin/ | панель: оператор, руководитель, кухня (RU / KZ / EN); клиентский магазин выключен (`SHOP_ENABLED=0`) | Mac Нурдаулета через Cloudflare Tunnel |
 
 Визитка выкладывается одной командой (нужен вход в Cloudflare: `npx wrangler@4 login`):
 

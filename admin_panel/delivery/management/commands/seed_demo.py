@@ -6,6 +6,7 @@ python manage.py seed_demo --orders 100
 """
 import random
 from datetime import timedelta
+from decimal import Decimal
 
 from django.conf import settings
 from django.contrib.auth.models import Group, User
@@ -15,10 +16,10 @@ from django.db import transaction
 from django.utils import timezone
 
 from delivery.models import Client, Courier, Order, OrderItem, Product
-from delivery.roles import MANAGER, OPERATOR
+from delivery.roles import KITCHEN, MANAGER, OPERATOR
 
 DEMO_PASSWORD = "nurlight-demo"
-DEMO_USERS = [("manager", MANAGER), ("operator", OPERATOR)]
+DEMO_USERS = [("manager", MANAGER), ("operator", OPERATOR), ("kitchen", KITCHEN)]
 
 COURIERS = [("Ерлан", "+77011234567"), ("Данияр", "+77021234567"), ("Асель", "+77031234567")]
 CLIENTS = ["Айгерим", "Тимур", "Мадина", "Алихан", "Жанна", "Руслан", "Дана", "Арман"]
@@ -70,6 +71,9 @@ class Command(BaseCommand):
                 courier=rng.choice(couriers) if has_courier else None,
                 status=status,
                 address=f"ул. {rng.choice(STREETS)}, {rng.randint(1, 200)}, кв. {rng.randint(1, 120)}",
+                # Геолокация клиента — точки в пределах Алматы
+                latitude=Decimal(f"{rng.uniform(43.20, 43.30):.6f}"),
+                longitude=Decimal(f"{rng.uniform(76.85, 76.98):.6f}"),
             )
             for product in rng.sample(products, k=rng.randint(1, min(3, len(products)))):
                 OrderItem.objects.create(
@@ -88,5 +92,5 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS(f"Добавлено заказов: {orders}."))
         self.stdout.write(
-            f"Пользователи панели: manager (руководитель), operator (оператор), пароль {DEMO_PASSWORD}"
+            f"Пользователи панели: manager (руководитель), operator (оператор), kitchen (кухня), пароль {DEMO_PASSWORD}"
         )
