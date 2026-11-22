@@ -25,7 +25,6 @@
     root.style.setProperty("--turn", mix(-24, -8, look).toFixed(2) + "deg");
     root.style.setProperty("--rise", (rise * size * 0.16).toFixed(1) + "px");
     root.style.setProperty("--spin", (rise * 40).toFixed(2) + "deg");
-    root.style.setProperty("--lift", (-seg(p, 0.55, 0.85) * window.innerHeight * 0.12).toFixed(1) + "px");
     root.style.setProperty("--steam", seg(p, 0.45, 0.65).toFixed(3));
 
     intro.style.opacity = (1 - seg(p, 0, 0.18)).toFixed(3);
