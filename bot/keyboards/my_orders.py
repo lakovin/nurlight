@@ -9,7 +9,7 @@ from delivery.models import Order
 
 class MyOrdersCallback(CallbackData, prefix="my"):
     # list, view, refresh, cancel, cancel_confirm, cancel_abort,
-    # pay (счёт за товары), pay_delivery (счёт за доставку)
+    # pay (счёт на весь заказ: блюда + доставка)
     action: str
     order_id: int = 0
 
@@ -56,23 +56,16 @@ def order_card_keyboard(order: dict) -> InlineKeyboardMarkup:
         callback_data=MyOrdersCallback(action="refresh", order_id=order_id),
     )
 
-    # Оплата: товары и доставка — отдельными счетами
-    if status != Order.Status.CANCELLED:
-        if not order["paid"] and can_invoice(order["total"]):
-            builder.button(
-                text="💳 Оплатить заказ",
-                callback_data=MyOrdersCallback(
-                    action="pay", order_id=order_id
-                ),
-            )
-
-        if order["delivery_due"] and can_invoice(order["delivery_price"]):
-            builder.button(
-                text="💳 Оплатить доставку",
-                callback_data=MyOrdersCallback(
-                    action="pay_delivery", order_id=order_id
-                ),
-            )
+    # Оплата одним счётом: блюда + доставка
+    if (
+        status != Order.Status.CANCELLED
+        and not order["paid"]
+        and can_invoice(order["total"])
+    ):
+        builder.button(
+            text="💳 Оплатить заказ",
+            callback_data=MyOrdersCallback(action="pay", order_id=order_id),
+        )
 
     # Отмена доступна только пока заказ «Новый» и не оплачен
     if status == Order.Status.NEW and not order["paid"]:

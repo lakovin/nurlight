@@ -26,7 +26,6 @@ async def demo_pay_handler(
     try:
         error = await demo_pay(
             callback.from_user.id,
-            callback_data.kind,
             callback_data.order_id,
         )
     except Exception:
@@ -67,7 +66,6 @@ async def payment_done(message: Message):
     """Деньги списаны: отмечаем оплату в базе."""
 
     payment = message.successful_payment
-    is_delivery = payment.invoice_payload.startswith(f"{payments.DELIVERY}:")
 
     try:
         marked = await sync_to_async(payments.mark_paid)(
@@ -99,8 +97,4 @@ async def payment_done(message: Message):
             payment.telegram_payment_charge_id,
         )
 
-    await message.answer(
-        "✅ Доставка оплачена, спасибо!"
-        if is_delivery
-        else "✅ Оплата прошла, спасибо! Заказ передан оператору."
-    )
+    await message.answer("✅ Оплата прошла, спасибо! Заказ передан оператору.")

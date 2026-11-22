@@ -2,9 +2,10 @@ from aiogram.fsm.state import State, StatesGroup
 
 
 class OrderForm(StatesGroup):
-    """Шаги оформления заказа. Обработчики появятся вместе с корзиной."""
+    """Шаги оформления заказа: геолокация → уточнение адреса → телефон → комментарий → подтверждение."""
 
-    address = State()
+    location = State()
+    address = State()  # необязательное уточнение: подъезд, этаж, квартира
     phone = State()
     comment = State()
     confirm = State()
