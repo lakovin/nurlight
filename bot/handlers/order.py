@@ -21,17 +21,20 @@ from bot.keyboards.order import (
     CANCEL_BUTTON,
     NO_COMMENT_BUTTON,
     KEEP_PHONE_PREFIX,
+    SKIP_ADDRESS_BUTTON,
     OrderCallback,
+    address_note_keyboard,
     cancel_keyboard,
     comment_keyboard,
     confirm_keyboard,
     edit_keyboard,
+    location_keyboard,
     phone_keyboard,
     retry_keyboard,
     saved_phone_keyboard,
 )
 from bot.services.clients import get_or_register_client
-from bot.services.delivery import delivery_line
+from bot.services.delivery import delivery_fee_for, delivery_text
 from bot.services.payment import (
     available as payment_available,
     send_order_invoice,
@@ -46,7 +49,7 @@ from bot.services.validation import (
     format_money,
     format_phone,
     normalize_phone,
-    validate_address,
+    validate_address_note,
     validate_comment,
 )
 from bot.states import OrderForm
@@ -166,11 +169,17 @@ async def show_order_summary(
             f"{format_money(subtotal)}"
         )
 
+    # Доставка входит в сумму заказа: 500 ₸, бесплатно от порога
+    fee = delivery_fee_for(total)
+
     lines.extend([
         "",
-        f"🚚 {delivery_line(total)}",
-        f"<b>Итого: {format_money(total)}</b>",
-        f"📍 Адрес: {html.escape(data['address'])}",
+        f"Блюда: {format_money(total)}",
+        f"🚚 {delivery_text(fee)}",
+        f"<b>Итого: {format_money(total + fee)}</b>",
+        f"📍 Геолокация: <a href=\"https://www.google.com/maps?q="
+        f"{data['latitude']},{data['longitude']}\">точка на карте</a>",
+        f"🏠 Уточнение: {html.escape(data.get('address') or 'нет')}",
         f"📱 Телефон: {html.escape(format_phone(data['phone']))}",
         f"💬 Комментарий: "
         f"{html.escape(data.get('comment') or 'Нет')}",
@@ -201,7 +210,7 @@ async def after_phone_received(
     await state.set_state(OrderForm.comment)
 
     await message.answer(
-        "💬 <b>Шаг 3. Комментарий</b>\n\n"
+        "💬 <b>Шаг 4. Комментарий</b>\n\n"
         "Напишите комментарий или нажмите «Без комментария».",
         reply_markup=comment_keyboard,
     )
@@ -250,13 +259,13 @@ async def start_checkout(
         return
 
     await state.update_data(editing=False)
-    await state.set_state(OrderForm.address)
+    await state.set_state(OrderForm.location)
 
     await callback.message.answer(
-        "📍 <b>Шаг 1. Адрес доставки</b>\n\n"
-        "Напишите город, улицу, дом и квартиру.\n"
-        "Например: Алматы, ул. Абая, 15, кв. 42",
-        reply_markup=cancel_keyboard,
+        "📍 <b>Шаг 1. Геолокация</b>\n\n"
+        "Нажмите кнопку «📍 Отправить геолокацию», чтобы курьер "
+        "нашёл вас на карте.",
+        reply_markup=location_keyboard,
     )
 
 
@@ -302,7 +311,43 @@ async def cancel_order(
     await callback.answer()
 
 
-# ---------- Шаг 1. Адрес ----------
+# ---------- Шаг 1. Геолокация ----------
+
+@router.message(OrderForm.location, F.location)
+async def receive_location(
+    message: Message,
+    state: FSMContext
+) -> None:
+
+    await state.update_data(
+        latitude=message.location.latitude,
+        longitude=message.location.longitude,
+    )
+
+    data = await state.get_data()
+
+    if data.get("editing"):
+        await show_order_summary(message, state)
+        return
+
+    await state.set_state(OrderForm.address)
+
+    await message.answer(
+        "🏠 <b>Шаг 2. Уточнение адреса</b>\n\n"
+        "Укажите подъезд, этаж, квартиру или домофон "
+        "либо нажмите «Пропустить».",
+        reply_markup=address_note_keyboard,
+    )
+
+
+@router.message(OrderForm.location)
+async def invalid_location(message: Message) -> None:
+    await message.answer(
+        "Отправьте геолокацию кнопкой «📍 Отправить геолокацию»."
+    )
+
+
+# ---------- Шаг 2. Уточнение адреса (по желанию) ----------
 
 @router.message(OrderForm.address, F.text)
 async def receive_address(
@@ -311,11 +356,15 @@ async def receive_address(
 ) -> None:
 
     address = message.text.strip()
-    error = validate_address(address)
 
-    if error:
-        await message.answer(error)
-        return
+    if address == SKIP_ADDRESS_BUTTON:
+        address = ""
+    else:
+        error = validate_address_note(address)
+
+        if error:
+            await message.answer(error)
+            return
 
     await state.update_data(address=address)
 
@@ -336,7 +385,7 @@ async def receive_address(
         await state.update_data(saved_phone=saved_phone)
 
         await message.answer(
-            "📱 <b>Шаг 2. Номер телефона</b>\n\n"
+            "📱 <b>Шаг 3. Номер телефона</b>\n\n"
             f"Ваш номер: <b>{html.escape(label)}</b>\n"
             "Оставьте его кнопкой ниже или введите другой "
             "(например: +7 777 123 45 67).",
@@ -345,7 +394,7 @@ async def receive_address(
         return
 
     await message.answer(
-        "📱 <b>Шаг 2. Номер телефона</b>\n\n"
+        "📱 <b>Шаг 3. Номер телефона</b>\n\n"
         "Отправьте номер кнопкой или введите вручную.\n"
         "Например: +7 777 123 45 67",
         reply_markup=phone_keyboard,
@@ -355,11 +404,11 @@ async def receive_address(
 @router.message(OrderForm.address)
 async def invalid_address(message: Message) -> None:
     await message.answer(
-        "Пожалуйста, отправьте адрес текстом."
+        "Напишите уточнение текстом или нажмите «Пропустить»."
     )
 
 
-# ---------- Шаг 2. Телефон ----------
+# ---------- Шаг 3. Телефон ----------
 
 @router.message(OrderForm.phone, F.contact)
 async def receive_contact(
@@ -446,7 +495,7 @@ async def invalid_phone(message: Message) -> None:
     )
 
 
-# ---------- Шаг 3. Комментарий ----------
+# ---------- Шаг 4. Комментарий ----------
 
 @router.message(
     OrderForm.comment,
@@ -502,7 +551,33 @@ async def edit_order(callback: CallbackQuery) -> None:
     await callback.answer()
 
 
-# ---------- Изменить адрес ----------
+# ---------- Изменить геолокацию ----------
+
+@router.callback_query(
+    OrderForm.confirm,
+    OrderCallback.filter(F.action == "edit_location")
+)
+async def edit_location(
+    callback: CallbackQuery,
+    state: FSMContext
+) -> None:
+
+    await state.update_data(editing=True)
+    await state.set_state(OrderForm.location)
+
+    await callback.message.edit_reply_markup(
+        reply_markup=None
+    )
+
+    await callback.message.answer(
+        "📍 Отправьте новую геолокацию кнопкой ниже:",
+        reply_markup=location_keyboard,
+    )
+
+    await callback.answer()
+
+
+# ---------- Изменить уточнение адреса ----------
 
 @router.callback_query(
     OrderForm.confirm,
@@ -521,8 +596,9 @@ async def edit_address(
     )
 
     await callback.message.answer(
-        "📍 Введите новый адрес доставки:",
-        reply_markup=cancel_keyboard,
+        "🏠 Введите уточнение адреса (подъезд, этаж, квартира) "
+        "или нажмите «Пропустить»:",
+        reply_markup=address_note_keyboard,
     )
 
     await callback.answer()
@@ -613,7 +689,7 @@ async def invalid_confirm_input(message: Message) -> None:
     )
 
 
-# ---------- Шаг 4. Сохранение заказа ----------
+# ---------- Шаг 5. Сохранение заказа ----------
 
 @router.callback_query(
     OrderForm.confirm,
@@ -681,8 +757,10 @@ async def confirm_order(
                 telegram_id=user_id,
                 name=callback.from_user.full_name,
                 cart=cart,
-                address=data["address"],
+                address=data.get("address", ""),
                 comment=comment,
+                latitude=data["latitude"],
+                longitude=data["longitude"],
             )
 
         except Exception:
@@ -726,7 +804,8 @@ async def confirm_order(
                 callback.message,
                 order.pk,
                 order.number,
-                order.total,
+                order.total - order.delivery_fee,
+                order.delivery_fee,
             ):
                 await callback.message.answer(
                     "💳 Оплатить заказ можно счётом выше или позже "

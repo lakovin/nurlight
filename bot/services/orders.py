@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from asgiref.sync import sync_to_async
 from django.db import transaction
 
@@ -62,7 +64,9 @@ def create_order(
     cart: dict,
     address: str,
     comment: str,
-    name: str = ""
+    name: str = "",
+    latitude: float | None = None,
+    longitude: float | None = None,
 ):
     """Создаёт заказ и его позиции в одной транзакции."""
 
@@ -99,10 +103,13 @@ def create_order(
 
             items.append((product, quantity))
 
+        # Координаты из геолокации Telegram; поля хранят 6 знаков после запятой
         order = Order.objects.create(
             client=client,
             address=address,
-            comment=comment
+            comment=comment,
+            latitude=round(Decimal(str(latitude)), 6) if latitude is not None else None,
+            longitude=round(Decimal(str(longitude)), 6) if longitude is not None else None,
         )
 
         for product, quantity in items:

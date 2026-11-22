@@ -14,7 +14,7 @@ from bot.keyboards.catalog import (
     products_keyboard,
 )
 from bot.keyboards.main_menu import CATALOG_BUTTON
-from bot.services.catalog import get_product, list_categories, list_products
+from bot.services.catalog import get_product_any, list_categories, list_products
 
 router = Router()
 
@@ -46,14 +46,17 @@ async def show_products(callback: CallbackQuery, callback_data: CategoryCallback
 
 @router.callback_query(ProductCallback.filter())
 async def show_product(callback: CallbackQuery, callback_data: ProductCallback, state: FSMContext):
-    product = await get_product(callback_data.id)
+    product = await get_product_any(callback_data.id)
     if product is None:
-        await callback.answer("Товар больше недоступен", show_alert=True)
+        await callback.answer("Товар не найден", show_alert=True)
         return
     parts = [f"<b>{html.escape(product.name)}</b>"]
     if product.description:
         parts.append(html.escape(product.description))
     parts.append(f"Цена: {product.price:.0f} ₸")
+    if not product.is_available:
+        # Недоступный товар показываем, но заказать его нельзя
+        parts.append("❌ <b>Нет в наличии</b>")
     text = "\n\n".join(parts)
     data = await state.get_data()
     qty = data.get("cart", {}).get(str(product.id), 0)
