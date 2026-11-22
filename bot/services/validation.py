@@ -18,6 +18,14 @@ def validate_address(address: str) -> str | None:
     return None
 
 
+def validate_address_note(note: str) -> str | None:
+    """Проверяет необязательное уточнение адреса (подъезд, этаж, квартира)."""
+    if len(note.strip()) > 500:
+        return "Уточнение слишком длинное. Максимум 500 символов."
+
+    return None
+
+
 def normalize_phone(raw: str) -> str | None:
     """Приводит казахстанский номер к формату +7XXXXXXXXXX."""
     if re.search(r"[A-Za-zА-Яа-я]", raw):

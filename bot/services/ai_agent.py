@@ -6,7 +6,7 @@ import time
 from google import genai
 from google.genai import types
 
-from bot.services.delivery import FREE_DELIVERY_FROM
+from bot.services.delivery import rules as delivery_rules
 from bot.services.validation import format_money
 from delivery.models import FAQ, Product
 
@@ -33,14 +33,17 @@ FAQ_LIMIT = 10
 FAQ_ANSWER_LIMIT = 250
 
 # Факты о магазине. Если условия изменятся — правим здесь, а не в промпте.
-# Правило доставки от Ислама (21.11.2026): бесплатно от 5 000 ₸, иначе
-# цена зависит от расстояния и её называет оператор.
-DELIVERY_INFO = (
-    f"Доставка бесплатная при заказе от {format_money(FREE_DELIVERY_FROM)}. "
-    "При меньшей сумме стоимость зависит от расстояния, "
-    "её уточняет оператор. "
-    "Ориентировочное время доставки — 60–90 минут."
-)
+# Правило доставки задаётся настройками (DELIVERY_FEE, DELIVERY_FREE_FROM):
+# сейчас 500 ₸, бесплатно от 5 000 ₸. Доставка входит в сумму заказа.
+def delivery_info() -> str:
+    fee, free_from = delivery_rules()
+    return (
+        f"Доставка стоит {format_money(fee)}, при заказе блюд от "
+        f"{format_money(free_from)} доставка бесплатная. "
+        "Ориентировочное время доставки — 60–90 минут."
+    )
+
+
 WORK_HOURS = "Работаем ежедневно с 10:00 до 22:00 (время Алматы)."
 HOW_TO_ORDER = (
     "Заказ оформляется через каталог и корзину: "
@@ -60,13 +63,12 @@ ERROR_TEXT = (
 # ---------- Данные из базы для промпта ----------
 
 async def build_catalog() -> str:
-    """Доступные товары: название, категория, цена и краткое описание."""
+    """Товары: название, категория, цена, описание. Недоступные — с пометкой."""
 
     products = (
         Product.objects
-        .filter(is_available=True)
         .select_related("category")
-        .order_by("id")[:CATALOG_LIMIT]
+        .order_by("-is_available", "id")[:CATALOG_LIMIT]
     )
 
     lines = []
@@ -76,6 +78,9 @@ async def build_catalog() -> str:
             f"{product.name} ({product.category.name}) — "
             f"{product.price:.0f} ₸"
         )
+
+        if not product.is_available:
+            line += " [нет в наличии]"
 
         description = " ".join(product.description.split())
 
@@ -140,7 +145,7 @@ async def build_instruction(client_context: str | None = None) -> str:
 сам о себе не рассказывай.
 
 Факты о магазине:
-- {DELIVERY_INFO}
+- {delivery_info()}
 - {WORK_HOURS}
 - {HOW_TO_ORDER}
 {payment_fact}
@@ -188,9 +193,9 @@ async def build_instruction(client_context: str | None = None) -> str:
 Правила безопасности:
 - Не выдумывай товары, цены, акции, скидки и условия.
 - Условия доставки бери из фактов о магазине. Если частые вопросы
-  противоречат фактам о магазине, верь фактам. Точную цену доставки
-  для заказа меньше порога бесплатной доставки не называй: её
-  уточняет оператор.
+  противоречат фактам о магазине, верь фактам.
+- Товары с пометкой «нет в наличии» заказать сейчас нельзя: скажи об
+  этом и предложи похожий товар из доступных.
 - Способы оплаты не называй и не придумывай (наличные, карта,
   оплата курьеру и т. д.), если их нет в данных выше. Скажи,
   что способ оплаты уточняет оператор.

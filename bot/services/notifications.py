@@ -8,7 +8,7 @@
 Ограничения этой версии (миграций нет):
 - последние известные статусы хранятся в памяти бота; изменения, которые
   произошли, пока бот был выключен, не отправляются;
-- клиентам с сайта (без Telegram) уведомления не отправляются.
+- заказы без Telegram у клиента (если такие остались) уведомления не получают.
 Надёжный вариант с журналом NotificationLog — позже, вместе с панелью.
 """
 import asyncio
@@ -37,6 +37,9 @@ MAX_ATTEMPTS = 3  # сколько раз пытаемся отправить о
 ACTIVE_STATUSES = (
     Order.Status.NEW,
     Order.Status.ACCEPTED,
+    Order.Status.COOKING,
+    Order.Status.PACKING,
+    Order.Status.READY,
     Order.Status.HANDED_TO_COURIER,
     Order.Status.IN_TRANSIT,
 )
@@ -46,6 +49,15 @@ MESSAGES = {
     Order.Status.ACCEPTED: (
         "✅ <b>Заказ №{number} принят</b>\n"
         "Оператор подтвердил заказ, скоро передадим его курьеру."
+    ),
+    Order.Status.COOKING: (
+        "🍳 <b>Заказ №{number} готовится</b>\n"
+        "Кухня уже работает над вашим заказом."
+    ),
+    # «Упаковывается» отдельным сообщением не отправляем, чтобы не засорять чат
+    Order.Status.READY: (
+        "🍽 <b>Заказ №{number} готов</b>\n"
+        "Сейчас передадим его курьеру."
     ),
     Order.Status.HANDED_TO_COURIER: (
         "🛵 <b>Заказ №{number} передан курьеру</b>\n"
