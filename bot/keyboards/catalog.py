@@ -28,13 +28,24 @@ def categories_keyboard(categories: list[Category]):
 def products_keyboard(products: list[Product]):
     builder = InlineKeyboardBuilder()
     for product in products:
-        builder.button(text=f"{product.name} — {product.price:.0f} ₸", callback_data=ProductCallback(id=product.id))
+        # Цвет кнопки в Telegram не меняется, поэтому недоступный товар помечаем значком и текстом
+        if product.is_available:
+            text = f"{product.name} — {product.price:.0f} ₸"
+        else:
+            text = f"❌ {product.name} — нет в наличии"
+        builder.button(text=text, callback_data=ProductCallback(id=product.id))
     builder.button(text="⬅️ К категориям", callback_data=BackToCategories())
     builder.adjust(1)
     return builder.as_markup()
 
 
 def product_keyboard(product: Product, qty: int = 0):
+    # Недоступный товар: в корзину добавить нельзя, только вернуться назад
+    if not product.is_available:
+        builder = InlineKeyboardBuilder()
+        builder.button(text="⬅️ Назад", callback_data=CategoryCallback(id=product.category_id))
+        return builder.as_markup()
+
     # Выбор количества виден сразу (0 шт); первое нажатие на ➕ кладёт товар в корзину
     builder = InlineKeyboardBuilder()
     builder.button(text="➖", callback_data=CartCallback(action="minus", id=product.id))

@@ -1,7 +1,6 @@
 from django.utils import timezone
 
 from bot.services.validation import format_money
-from delivery import payments
 from delivery.models import Order
 
 ORDERS_LIMIT = 10
@@ -10,6 +9,9 @@ ORDERS_LIMIT = 10
 STATUS_EMOJI = {
     Order.Status.NEW: "🕐",
     Order.Status.ACCEPTED: "✅",
+    Order.Status.COOKING: "🍳",
+    Order.Status.PACKING: "📦",
+    Order.Status.READY: "🍽",
     Order.Status.HANDED_TO_COURIER: "🛵",
     Order.Status.IN_TRANSIT: "🚚",
     Order.Status.DELIVERED: "✅",
@@ -86,9 +88,11 @@ async def get_order_for_client(
         "comment": order.comment,
         # Оплата: товары и доставка оплачиваются отдельными счетами
         "paid": order.payment_status == Order.PaymentStatus.PAID,
-        "delivery_price": order.delivery_price,
-        "delivery_paid": order.delivery_paid_at is not None,
-        "delivery_due": payments.delivery_due(order),
+        # Доставка входит в сумму заказа (total = блюда + доставка)
+        "latitude": order.latitude,
+        "longitude": order.longitude,
+        "items_total": order.total - order.delivery_fee,
+        "delivery_fee": order.delivery_fee,
     }
 
 
