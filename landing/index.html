@@ -4,19 +4,19 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Nurlight — доставка пиццы через Telegram</title>
-  <meta name="description" content="Пицца и напитки с доставкой по городу. Заказ, оплата и статус — в Telegram-боте Nurlight.">
+  <meta name="description" content="Пицца и напитки с доставкой по городу. Заказ и статус заказа — в Telegram-боте Nurlight.">
   <meta name="theme-color" content="#FFF8EF">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='46' fill='%23F28C28'/%3E%3Ccircle cx='50' cy='50' r='34' fill='%23F7D36B'/%3E%3Ccircle cx='38' cy='40' r='7' fill='%23B3311F'/%3E%3Ccircle cx='60' cy='58' r='7' fill='%23B3311F'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="top">
     <a class="logo" href="#"><span class="logo-dot"></span>Nurlight</a>
     <!-- Ссылка на бота — во всех кнопках data-bot -->
-    <a class="btn btn-small" data-bot href="https://t.me/nurlight_delivery_bot">Открыть бота</a>
+    <a class="btn btn-quiet" data-bot href="https://t.me/nurlight_delivery_bot">Открыть бота</a>
   </header>
 
   <!-- Сцена с коробкой: высокий блок, внутри «прилипшая» сцена; прокрутка открывает крышку -->
@@ -89,12 +89,13 @@
       <div class="copy">
         <div class="intro" data-fade="out">
           <p class="eyebrow">Доставка по городу</p>
-          <h1>Что внутри?</h1>
-          <p class="hint">Прокрутите вниз <span class="arrow">↓</span></p>
+          <h1>Пицца с доставкой — заказ через Telegram-бот</h1>
+          <p class="hint">Что внутри? Прокрутите вниз ↓</p>
         </div>
         <div class="reveal" data-fade="in">
-          <h2>Горячая пицца — в один чат</h2>
-          <p>Меню, корзина, оплата картой и статус заказа — всё в Telegram-боте Nurlight. Без регистрации и приложений.</p>
+          <!-- TODO: когда в боте заработает оплата, добавить «оплата картой в чате» -->
+          <h2>Меню, корзина и статус заказа — в одном чате</h2>
+          <p>Выберите пиццу и напитки в боте Nurlight и укажите адрес. Приложение и регистрация не нужны.</p>
           <a class="btn" data-bot href="https://t.me/nurlight_delivery_bot">Заказать в Telegram</a>
         </div>
       </div>
@@ -107,24 +108,25 @@
       <ol class="steps">
         <li class="card"><span class="num">1</span><h3>Откройте бота</h3><p>Нажмите «Заказать в Telegram» — бот откроется в приложении или в браузере.</p></li>
         <li class="card"><span class="num">2</span><h3>Соберите корзину</h3><p>Выберите пиццу и напитки из меню, укажите адрес и телефон.</p></li>
-        <li class="card"><span class="num">3</span><h3>Оплатите в чате</h3><p>Счёт придёт прямо в чат — оплата картой, не выходя из Telegram.</p></li>
+        <!-- TODO: когда в боте заработает оплата, вернуть шаг «Оплатите в чате» -->
+        <li class="card"><span class="num">3</span><h3>Подтвердите заказ</h3><p>Оператор проверит заказ и назовёт время доставки. Статус — в разделе «Мои заказы».</p></li>
       </ol>
     </section>
 
     <section class="section">
       <h2 class="section-title">Почему через Telegram</h2>
       <div class="features">
-        <div class="card feature"><h3>Без лишнего</h3><p>Не нужно ставить приложение и придумывать пароль.</p></div>
-        <div class="card feature"><h3>Заказ всегда под рукой</h3><p>«Мои заказы» в боте показывают состав и статус каждого заказа.</p></div>
-        <div class="card feature"><h3>ИИ-консультант</h3><p>Спросите бота, что взять на компанию или сколько стоит доставка.</p></div>
-        <div class="card feature"><h3>Доставка</h3><p>Бесплатно от 5 000 ₸. Для заказа меньше стоимость доставки уточнит оператор.</p></div>
+        <div class="card feature"><h3>Не нужно приложение</h3><p>Бот открывается прямо в Telegram — без установки и пароля.</p></div>
+        <div class="card feature"><h3>Состав и статус каждого заказа</h3><p>Раздел «Мои заказы» показывает, что заказано и на каком этапе заказ.</p></div>
+        <div class="card feature"><h3>Ответы на вопросы в чате</h3><p>Спросите бота, что взять на компанию или сколько стоит доставка — ответит ИИ-консультант.</p></div>
+        <div class="card feature"><h3>Доставка бесплатно от 5 000 ₸</h3><p>Для заказа меньше стоимость доставки назовёт оператор.</p></div>
       </div>
     </section>
 
     <section class="section cta card">
       <div>
-        <h2>Проголодались?</h2>
-        <p>Откройте бота — меню уже ждёт.</p>
+        <h2>Меню и цены — в боте</h2>
+        <p>@nurlight_delivery_bot в Telegram</p>
       </div>
       <a class="btn" data-bot href="https://t.me/nurlight_delivery_bot">Заказать в Telegram</a>
     </section>
