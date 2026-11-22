@@ -1,4 +1,4 @@
-// Первый экран: телефон с чатом бота один раз проигрывает заказ, когда появляется на экране.
+// Первый экран: телефон с чатом бота по кругу, как гифка, проигрывает заказ, пока виден на экране.
 // Шаги слева подсвечиваются вместе с чатом, клик по шагу перематывает к нему.
 (function () {
   var feed = document.getElementById("feed");
@@ -71,6 +71,7 @@
   }
   function mark(stage) { steps.forEach(function (s, i) { s.classList.toggle("active", i === stage); }); }
 
+  var LOOP_PAUSE = 3000;
   function stop() { timers.forEach(clearTimeout); timers = []; }
   // Проиграть с шага from; instant — без задержек (перемотка и «уменьшение движения»)
   function play(from, instant) {
@@ -84,6 +85,8 @@
       t += delay;
       timers.push(setTimeout(function () { mark(stage); fn(); }, t));
     });
+    // Как гифка: после «Доставлен» пауза — и заказ проигрывается заново
+    if (!instant) timers.push(setTimeout(function () { play(0, false); }, t + LOOP_PAUSE));
     Array.prototype.forEach.call(feed.querySelectorAll(".msg"), function (m) { m.style.animation = "none"; });
     if (instant) mark(script[script.length - 1][0]);
   }
@@ -95,12 +98,12 @@
       mark(idx);
     });
   });
-  document.getElementById("replay").addEventListener("click", function () { play(0, reduced); });
-
-  // Проигрывается один раз, когда телефон появился на экране
+  // Крутится по кругу, пока телефон на экране; ушёл с экрана — пауза, чтобы не тратить ресурсы.
+  // При «уменьшении движения» чат сразу показан целиком и не крутится.
   if (reduced || !("IntersectionObserver" in window)) { play(0, true); return; }
   var io = new IntersectionObserver(function (entries) {
-    if (entries[0].isIntersecting) { play(0, false); io.disconnect(); }
+    if (entries[0].isIntersecting) { if (!timers.length) play(0, false); }
+    else stop();
   }, { threshold: 0.4 });
   io.observe(document.querySelector(".phone"));
 })();
