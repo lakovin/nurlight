@@ -1,5 +1,6 @@
 from django.utils import timezone
 
+from bot.i18n import status_label
 from bot.services.validation import format_money
 from delivery.models import Order
 
@@ -21,7 +22,7 @@ STATUS_EMOJI = {
 
 def status_text(order: Order) -> str:
     emoji = STATUS_EMOJI.get(order.status, "")
-    return f"{emoji} {order.get_status_display()}".strip()
+    return f"{emoji} {status_label(order.status)}".strip()
 
 
 async def get_last_orders(

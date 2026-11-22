@@ -7,17 +7,15 @@ from aiogram.types import CallbackQuery, Message
 
 from bot.keyboards.cart import CartCallback, cart_keyboard
 from bot.keyboards.catalog import product_keyboard
-from bot.keyboards.main_menu import CART_BUTTON
+from bot.i18n import t
+from bot.keyboards.main_menu import CART_BUTTONS
 from bot.services.cart import get_cart_items
 from bot.services.catalog import get_product
 
 router = Router()
 
-EMPTY_TEXT = "Корзина пуста. Загляните в каталог 🛍"
-
-
 def cart_text(items) -> str:
-    lines = ["🛒 <b>Ваша корзина</b>\n"]
+    lines = [t("cart_title")]
     total = 0
 
     for product, qty in items:
@@ -29,18 +27,18 @@ def cart_text(items) -> str:
             f"{qty} × {product.price:.0f} = {subtotal:.0f} ₸"
         )
 
-    lines.append(f"\n<b>Итого: {total:.0f} ₸</b>")
+    lines.append("\n" + t("cart_total", total=f"{total:.0f}"))
     return "\n".join(lines)
 
 
 @router.message(Command("cart"))
-@router.message(F.text == CART_BUTTON)
+@router.message(F.text.in_(CART_BUTTONS))
 async def show_cart(message: Message, state: FSMContext):
     data = await state.get_data()
     items = await get_cart_items(data.get("cart", {}))
 
     if not items:
-        await message.answer(EMPTY_TEXT)
+        await message.answer(t("cart_empty"))
         return
 
     await message.answer(
@@ -58,7 +56,7 @@ async def show_cart_callback(
     items = await get_cart_items(data.get("cart", {}))
 
     if not items:
-        await callback.answer("Корзина пуста", show_alert=True)
+        await callback.answer(t("cart_empty_alert"), show_alert=True)
         return
 
     await callback.message.answer(
@@ -87,7 +85,7 @@ async def change_quantity(
 
         if product is None:
             await callback.answer(
-                "Товар больше недоступен",
+                t("product_unavailable_alert"),
                 show_alert=True,
             )
             return
@@ -112,7 +110,7 @@ async def change_quantity(
         items = await get_cart_items(cart)
 
         if not items:
-            await callback.message.edit_text(EMPTY_TEXT)
+            await callback.message.edit_text(t("cart_empty"))
         else:
             await callback.message.edit_text(
                 cart_text(items),
@@ -137,7 +135,7 @@ async def clear_cart(
 ):
     await state.update_data(cart={})
 
-    await callback.message.edit_text("Корзина очищена 🗑")
+    await callback.message.edit_text(t("cart_cleared"))
     await callback.answer()
 
 

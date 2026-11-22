@@ -6,6 +6,7 @@ import time
 from google import genai
 from google.genai import types
 
+from bot.i18n import t
 from bot.services.delivery import rules as delivery_rules
 from bot.services.validation import format_money
 from delivery.models import FAQ, Product
@@ -50,14 +51,8 @@ HOW_TO_ORDER = (
     "кнопка «Оформить заказ»."
 )
 
-TIMEOUT_TEXT = (
-    "⏳ AI отвечает слишком долго. Попробуйте ещё раз "
-    "немного позже или напишите оператору."
-)
-ERROR_TEXT = (
-    "⚠️ Сейчас не удалось связаться с AI. Попробуйте позже "
-    "или напишите оператору."
-)
+# Названия языков для подсказки модели
+LANGUAGE_NAMES = {"ru": "русский", "kk": "казахский", "en": "английский"}
 
 
 # ---------- Данные из базы для промпта ----------
@@ -106,7 +101,10 @@ async def build_faq() -> str:
     return "\n".join(lines) or "Нет данных."
 
 
-async def build_instruction(client_context: str | None = None) -> str:
+async def build_instruction(
+    client_context: str | None = None,
+    language: str | None = None,
+) -> str:
     """Системная инструкция: роль, факты, каталог, FAQ и правила.
 
     client_context — данные о заказах ТОЛЬКО этого клиента (передаёт бот).
@@ -115,6 +113,15 @@ async def build_instruction(client_context: str | None = None) -> str:
 
     catalog_text = await build_catalog()
     faq_text = await build_faq()
+
+    # Язык интерфейса клиента (выбран в боте): на нём и отвечаем
+    if language in LANGUAGE_NAMES:
+        language_hint = (
+            f"- Клиент выбрал язык интерфейса: {LANGUAGE_NAMES[language]}. "
+            "Отвечай на нём, если клиент не пишет на другом языке.\n"
+        )
+    else:
+        language_hint = ""
 
     # Об оплате в боте говорим, только если она включена (есть токен)
     if os.getenv("PAYMENT_PROVIDER_TOKEN") or os.getenv("PAYMENT_DEMO") == "1":
@@ -180,7 +187,7 @@ async def build_instruction(client_context: str | None = None) -> str:
 
 Правила общения:
 - Отвечай на языке пользователя.
-- Отвечай в 2–4 коротких предложениях, естественно и по существу.
+{language_hint}- Отвечай в 2–4 коротких предложениях, естественно и по существу.
 - Учитывай предыдущие сообщения диалога, понимай уточнения
   вроде «А какая дешевле?».
 - Не здоровайся после каждого сообщения; приветствуй только
@@ -218,6 +225,7 @@ async def ask_ai(
     question: str,
     history: list[dict] | None = None,
     client_context: str | None = None,
+    language: str | None = None,
 ) -> tuple[str, bool]:
     """
     AI-консультант с памятью диалога.
@@ -229,14 +237,14 @@ async def ask_ai(
     api_key = os.getenv("GEMINI_API_KEY")
 
     if not api_key:
-        return "⚠️ Gemini API-ключ не настроен.", False
+        return "⚠️ Gemini API key is not configured.", False
 
     # Актуальные данные из базы Django
     try:
-        instruction = await build_instruction(client_context)
+        instruction = await build_instruction(client_context, language)
     except Exception:
         logger.exception("Не удалось собрать контекст для AI")
-        return ERROR_TEXT, False
+        return t("ai_unavailable", language), False
 
     # Формируем историю для Gemini
     contents = []
@@ -311,19 +319,19 @@ async def ask_ai(
         answer = (response.text or "").strip()
 
         if not answer:
-            return "Не удалось получить ответ. Попробуйте ещё раз.", False
+            return t("ai_empty", language), False
 
         return answer, True
 
     except (asyncio.TimeoutError, TimeoutError):
         logger.warning("Gemini превысил время ожидания")
 
-        return TIMEOUT_TEXT, False
+        return t("ai_timeout", language), False
 
     except Exception:
         logger.exception("Ошибка Gemini API")
 
-        return ERROR_TEXT, False
+        return t("ai_unavailable", language), False
 
     finally:
         await client.aio.aclose()

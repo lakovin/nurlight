@@ -2,11 +2,14 @@ from aiogram.filters.callback_data import CallbackData
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+from bot.i18n import t, variants
 
-# Текст кнопок
-CANCEL_BUTTON = "⬅️ Отменить"
-SEND_PHONE_BUTTON = "📱 Отправить номер"
-NO_COMMENT_BUTTON = "Без комментария"
+# Тексты кнопок на всех языках: по ним обработчики узнают нажатие,
+# какой бы язык ни выбрал клиент
+CANCEL_BUTTONS = variants("btn_cancel")
+NO_COMMENT_BUTTONS = variants("btn_no_comment")
+SKIP_BUTTONS = variants("btn_skip")
+KEEP_PHONE_PREFIXES = tuple(variants("btn_keep_prefix"))
 
 
 # Данные нажатий inline-кнопок
@@ -15,83 +18,84 @@ class OrderCallback(CallbackData, prefix="order"):
 
 
 # Кнопка отмены оформления
-cancel_keyboard = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text=CANCEL_BUTTON)]
-    ],
-    resize_keyboard=True
-)
+def cancel_keyboard() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text=t("btn_cancel"))]
+        ],
+        resize_keyboard=True
+    )
 
 
 # Кнопки для ввода телефона
-phone_keyboard = ReplyKeyboardMarkup(
-    keyboard=[
-        [
-            KeyboardButton(
-                text=SEND_PHONE_BUTTON,
-                request_contact=True
-            )
+def phone_keyboard() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [
+                KeyboardButton(
+                    text=t("btn_send_phone"),
+                    request_contact=True
+                )
+            ],
+            [KeyboardButton(text=t("btn_cancel"))]
         ],
-        [KeyboardButton(text=CANCEL_BUTTON)]
-    ],
-    resize_keyboard=True
-)
+        resize_keyboard=True
+    )
 
-
-LOCATION_BUTTON = "📍 Отправить геолокацию"
-SKIP_ADDRESS_BUTTON = "Пропустить"
 
 # Адрес клиент указывает только геолокацией
-location_keyboard = ReplyKeyboardMarkup(
-    keyboard=[
-        [
-            KeyboardButton(
-                text=LOCATION_BUTTON,
-                request_location=True
-            )
+def location_keyboard() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [
+                KeyboardButton(
+                    text=t("btn_send_location"),
+                    request_location=True
+                )
+            ],
+            [KeyboardButton(text=t("btn_cancel"))]
         ],
-        [KeyboardButton(text=CANCEL_BUTTON)]
-    ],
-    resize_keyboard=True
-)
+        resize_keyboard=True
+    )
+
 
 # Необязательное уточнение адреса (подъезд, этаж, квартира)
-address_note_keyboard = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text=SKIP_ADDRESS_BUTTON)],
-        [KeyboardButton(text=CANCEL_BUTTON)]
-    ],
-    resize_keyboard=True
-)
-
-KEEP_PHONE_PREFIX = "✅ Оставить"
+def address_note_keyboard() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text=t("btn_skip"))],
+            [KeyboardButton(text=t("btn_cancel"))]
+        ],
+        resize_keyboard=True
+    )
 
 
 # Телефон уже есть в профиле: оставить его, отправить другой или ввести вручную
 def saved_phone_keyboard(phone_label: str) -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text=f"{KEEP_PHONE_PREFIX} {phone_label}")],
+            [KeyboardButton(text=f"{t('btn_keep_prefix')} {phone_label}")],
             [
                 KeyboardButton(
-                    text=SEND_PHONE_BUTTON,
+                    text=t("btn_send_phone"),
                     request_contact=True
                 )
             ],
-            [KeyboardButton(text=CANCEL_BUTTON)]
+            [KeyboardButton(text=t("btn_cancel"))]
         ],
         resize_keyboard=True
     )
 
 
 # Кнопки для комментария
-comment_keyboard = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text=NO_COMMENT_BUTTON)],
-        [KeyboardButton(text=CANCEL_BUTTON)]
-    ],
-    resize_keyboard=True
-)
+def comment_keyboard() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text=t("btn_no_comment"))],
+            [KeyboardButton(text=t("btn_cancel"))]
+        ],
+        resize_keyboard=True
+    )
 
 
 # Подтверждение заказа
@@ -99,15 +103,15 @@ def confirm_keyboard():
     builder = InlineKeyboardBuilder()
 
     builder.button(
-        text="✅ Подтвердить",
+        text=t("btn_confirm"),
         callback_data=OrderCallback(action="confirm")
     )
     builder.button(
-        text="✏️ Изменить",
+        text=t("btn_edit"),
         callback_data=OrderCallback(action="edit")
     )
     builder.button(
-        text="❌ Отмена",
+        text=t("btn_cancel_inline"),
         callback_data=OrderCallback(action="cancel")
     )
 
@@ -120,23 +124,23 @@ def edit_keyboard():
     builder = InlineKeyboardBuilder()
 
     builder.button(
-        text="📍 Геолокация",
+        text=t("btn_edit_location"),
         callback_data=OrderCallback(action="edit_location")
     )
     builder.button(
-        text="🏠 Уточнение адреса",
+        text=t("btn_edit_note"),
         callback_data=OrderCallback(action="edit_address")
     )
     builder.button(
-        text="📱 Телефон",
+        text=t("btn_edit_phone"),
         callback_data=OrderCallback(action="edit_phone")
     )
     builder.button(
-        text="💬 Комментарий",
+        text=t("btn_edit_comment"),
         callback_data=OrderCallback(action="edit_comment")
     )
     builder.button(
-        text="⬅️ Назад",
+        text=t("btn_back"),
         callback_data=OrderCallback(action="back")
     )
 
@@ -149,11 +153,11 @@ def retry_keyboard():
     builder = InlineKeyboardBuilder()
 
     builder.button(
-        text="🔁 Повторить",
+        text=t("btn_retry"),
         callback_data=OrderCallback(action="retry")
     )
     builder.button(
-        text="❌ Отмена",
+        text=t("btn_cancel_inline"),
         callback_data=OrderCallback(action="cancel")
     )
 

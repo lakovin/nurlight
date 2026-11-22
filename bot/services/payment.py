@@ -18,6 +18,7 @@ from decimal import Decimal
 from aiogram.types import LabeledPrice, Message
 from asgiref.sync import sync_to_async
 
+from bot.i18n import t
 from bot.keyboards.payment import demo_pay_keyboard
 from bot.services.validation import format_money
 from delivery import payments
@@ -71,28 +72,26 @@ async def send_order_invoice(
 
     if demo_enabled():
         await message.answer(
-            f"💳 <b>Тестовая оплата заказа №{number}</b>\n"
-            f"Сумма: {format_money(total)}\n\n"
-            "Это демонстрационный режим: деньги не списываются.",
+            t("demo_invoice", number=number, amount=format_money(total)),
             reply_markup=demo_pay_keyboard(order_id),
         )
         return True
 
     prices = [
-        LabeledPrice(label="Блюда", amount=payments.amount(items_total))
+        LabeledPrice(label=t("invoice_items"), amount=payments.amount(items_total))
     ]
 
     if delivery_fee > 0:
         prices.append(
             LabeledPrice(
-                label="Доставка",
+                label=t("invoice_delivery"),
                 amount=payments.amount(delivery_fee),
             )
         )
 
     await message.answer_invoice(
-        title=f"Заказ №{number}",
-        description="Оплата заказа Nurlight",
+        title=t("invoice_title", number=number),
+        description=t("invoice_desc"),
         payload=f"{payments.ORDER}:{order_id}",
         provider_token=provider_token(),
         currency=payments.CURRENCY,
@@ -107,7 +106,7 @@ def _demo_pay_sync(telegram_id: int, order_id: int) -> str | None:
     ).first()
 
     if order is None:
-        return "Заказ не найден."
+        return t("order_not_found")
 
     payload = payments.invoice_payload(order)
     amount = payments.amount(order.total)

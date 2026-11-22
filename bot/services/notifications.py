@@ -26,6 +26,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from django.db.models import Q
 from django.utils import timezone
 
+from bot.i18n import t
 from bot.keyboards.my_orders import MyOrdersCallback
 from delivery.models import Order
 
@@ -44,37 +45,17 @@ ACTIVE_STATUSES = (
     Order.Status.IN_TRANSIT,
 )
 
-# Сообщение на каждый статус, кроме «Новый» (о нём клиент знает из бота)
+# Ключ перевода (bot/i18n.py) на каждый статус, кроме «Новый» (о нём клиент знает из бота).
+# Тексты на языке клиента берутся из Client.language.
 MESSAGES = {
-    Order.Status.ACCEPTED: (
-        "✅ <b>Заказ №{number} принят</b>\n"
-        "Оператор подтвердил заказ, скоро передадим его курьеру."
-    ),
-    Order.Status.COOKING: (
-        "🍳 <b>Заказ №{number} готовится</b>\n"
-        "Кухня уже работает над вашим заказом."
-    ),
+    Order.Status.ACCEPTED: "notify_accepted",
+    Order.Status.COOKING: "notify_cooking",
     # «Упаковывается» отдельным сообщением не отправляем, чтобы не засорять чат
-    Order.Status.READY: (
-        "🍽 <b>Заказ №{number} готов</b>\n"
-        "Сейчас передадим его курьеру."
-    ),
-    Order.Status.HANDED_TO_COURIER: (
-        "🛵 <b>Заказ №{number} передан курьеру</b>\n"
-        "Курьер скоро выедет к вам."
-    ),
-    Order.Status.IN_TRANSIT: (
-        "🚚 <b>Заказ №{number} в пути</b>\n"
-        "Курьер уже едет к вам."
-    ),
-    Order.Status.DELIVERED: (
-        "🎉 <b>Заказ №{number} доставлен</b>\n"
-        "Приятного аппетита! Будем рады видеть вас снова."
-    ),
-    Order.Status.CANCELLED: (
-        "❌ <b>Заказ №{number} отменён</b>\n"
-        "Если это ошибка, свяжитесь с оператором."
-    ),
+    Order.Status.READY: "notify_ready",
+    Order.Status.HANDED_TO_COURIER: "notify_handed_to_courier",
+    Order.Status.IN_TRANSIT: "notify_in_transit",
+    Order.Status.DELIVERED: "notify_delivered",
+    Order.Status.CANCELLED: "notify_cancelled",
 }
 
 # order_id -> последний известный статус; order_id -> число неудачных попыток
@@ -96,17 +77,17 @@ def detect_changes(
     known: dict[int, str],
     rows: list[tuple],
     started_at: datetime,
-) -> list[tuple[int, int, str]]:
+) -> list[tuple[int, int, str, str]]:
     """Находит заказы, о смене статуса которых нужно сообщить.
 
-    rows — (id заказа, статус, telegram_id, дата создания).
-    Возвращает [(id заказа, telegram_id, новый статус)]. Заказы, у которых
+    rows — (id заказа, статус, telegram_id, дата создания, язык клиента).
+    Возвращает [(id заказа, telegram_id, новый статус, язык)]. Заказы, у которых
     сообщения нет (например, возврат в «Новый»), и первое знакомство со
     старыми заказами просто записываются в known.
     """
     changes = []
 
-    for order_id, status, telegram_id, created_at in rows:
+    for order_id, status, telegram_id, created_at, language in rows:
         status = str(status)
         previous = known.get(order_id)
 
@@ -122,17 +103,17 @@ def detect_changes(
         if status == previous:
             known[order_id] = status
         elif status in MESSAGES:
-            changes.append((order_id, telegram_id, status))
+            changes.append((order_id, telegram_id, status, language))
         else:
             known[order_id] = status
 
     return changes
 
 
-def orders_keyboard() -> InlineKeyboardMarkup:
+def orders_keyboard(language: str) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(
-        text="📦 Мои заказы",
+        text=t("btn_orders", language),
         callback_data=MyOrdersCallback(action="list"),
     )
     return builder.as_markup()
@@ -143,16 +124,17 @@ async def notify(
     order_id: int,
     telegram_id: int,
     status: str,
+    language: str,
 ) -> bool:
-    """Отправляет одно уведомление. True — больше пытаться не нужно."""
+    """Отправляет одно уведомление на языке клиента. True — больше пытаться не нужно."""
 
-    text = MESSAGES[status].format(number=f"{order_id:06d}")
+    text = t(MESSAGES[status], language, number=f"{order_id:06d}")
 
     try:
         await bot.send_message(
             telegram_id,
             text,
-            reply_markup=orders_keyboard(),
+            reply_markup=orders_keyboard(language),
         )
         return True
 
@@ -203,15 +185,16 @@ async def poll_once(bot: Bot, started_at: datetime) -> None:
             .filter(client__telegram_id__isnull=False)
             .filter(Q(status__in=ACTIVE_STATUSES) | Q(pk__in=active_known))
             .values_list(
-                "id", "status", "client__telegram_id", "created_at"
+                "id", "status", "client__telegram_id", "created_at",
+                "client__language",
             )
         )
     ]
 
-    for order_id, telegram_id, status in detect_changes(
+    for order_id, telegram_id, status, language in detect_changes(
         _known, rows, started_at
     ):
-        if await notify(bot, order_id, telegram_id, status):
+        if await notify(bot, order_id, telegram_id, status, language):
             mark_known(order_id, status)
 
 

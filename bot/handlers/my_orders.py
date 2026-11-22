@@ -6,7 +6,8 @@ from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
 
-from bot.keyboards.main_menu import MY_ORDERS_BUTTON
+from bot.i18n import t
+from bot.keyboards.main_menu import MY_ORDERS_BUTTONS
 from bot.keyboards.my_orders import (
     MyOrdersCallback,
     after_cancel_keyboard,
@@ -36,24 +37,11 @@ from delivery.models import Order
 router = Router()
 logger = logging.getLogger(__name__)
 
-EMPTY_TEXT = "Пока нет заказов. Самое время что-нибудь выбрать 🛍"
-LOAD_ERROR_TEXT = "Не удалось загрузить заказы. Попробуйте ещё раз."
-NOT_FOUND_TEXT = "Заказ не найден."
-TOO_LATE_TEXT = (
-    "Заказ уже принят оператором — отменить его нельзя.\n"
-    "Свяжитесь с оператором, он поможет."
-)
-PAID_TEXT = (
-    "Заказ уже оплачен. Отмену и возврат денег оформит оператор.\n"
-    "Свяжитесь с оператором, он поможет."
-)
-
-
 # ---------- Тексты ----------
 
 def format_orders(orders: list[dict]) -> str:
     """Текст списка заказов."""
-    lines = ["<b>📦 Мои заказы</b>", ""]
+    lines = [t("orders_title"), ""]
 
     for index, order in enumerate(orders, start=1):
         lines.append(
@@ -63,7 +51,7 @@ def format_orders(orders: list[dict]) -> str:
         )
 
     if len(orders) >= ORDERS_LIMIT:
-        lines.extend(["", f"Показаны последние {ORDERS_LIMIT} заказов."])
+        lines.extend(["", t("orders_limit", n=ORDERS_LIMIT)])
 
     return "\n".join(lines)
 
@@ -71,11 +59,11 @@ def format_orders(orders: list[dict]) -> str:
 def format_order_card(order: dict) -> str:
     """Текст карточки заказа. Цены — из OrderItem."""
     lines = [
-        f"<b>📦 Заказ №{order['number']}</b>",
-        f"Статус: {order['status_text']}",
-        f"Создан: {order['created']:%d.%m.%Y, %H:%M}",
+        t("card_title", number=order["number"]),
+        t("card_status", status=order["status_text"]),
+        t("card_created", date=f"{order['created']:%d.%m.%Y, %H:%M}"),
         "",
-        "Состав:",
+        t("card_items_header"),
     ]
 
     for item in order["items"]:
@@ -90,30 +78,40 @@ def format_order_card(order: dict) -> str:
 
     lines.extend([
         "",
-        f"Блюда: {format_money(order['items_total'])}",
+        t("label_items", amount=format_money(order["items_total"])),
         delivery_text(order["delivery_fee"]),
-        f"<b>Итого: {format_money(order['total'])}</b>",
+        t("label_total", amount=format_money(order["total"])),
         *(
-            [f"Оплата: {'✅ оплачен' if order['paid'] else 'не оплачен'}"]
+            [
+                t(
+                    "card_payment",
+                    state=t("pay_state_paid" if order["paid"] else "pay_state_unpaid"),
+                )
+            ]
             if order["paid"] or payment_enabled()
             else []
         ),
         "",
         *(
             [
-                '📍 Геолокация: <a href="https://www.google.com/maps?q='
-                f'{order["latitude"]},{order["longitude"]}">точка на карте</a>'
+                t(
+                    "summary_location",
+                    url=(
+                        "https://www.google.com/maps?q="
+                        f"{order['latitude']},{order['longitude']}"
+                    ),
+                )
             ]
             if order["latitude"] is not None
             else []
         ),
-        f"Уточнение адреса: {html.escape(order['address'] or '—')}",
-        f"Телефон: {html.escape(phone)}",
-        f"Комментарий: {html.escape(comment)}",
+        t("card_note", text=html.escape(order["address"] or "—")),
+        t("card_phone", text=html.escape(phone)),
+        t("card_comment", text=html.escape(comment)),
     ])
 
     if order["status"] == "delivered":
-        lines.extend(["", "🙏 Спасибо за заказ! Будем рады видеть снова."])
+        lines.extend(["", t("delivered_thanks")])
 
     return "\n".join(lines)
 
@@ -128,13 +126,13 @@ async def show_list(target: Message | CallbackQuery) -> None:
         orders = await get_last_orders(target.from_user.id)
     except Exception:
         logger.exception("Не удалось загрузить заказы")
-        text, markup = LOAD_ERROR_TEXT, retry_list_keyboard()
+        text, markup = t("orders_load_error"), retry_list_keyboard()
     else:
         if orders:
             text = format_orders(orders)
             markup = orders_list_keyboard(orders)
         else:
-            text, markup = EMPTY_TEXT, empty_orders_keyboard()
+            text, markup = t("orders_empty"), empty_orders_keyboard()
 
     if isinstance(target, Message):
         await message.answer(text, reply_markup=markup)
@@ -143,7 +141,7 @@ async def show_list(target: Message | CallbackQuery) -> None:
 
 
 @router.message(Command("orders"))
-@router.message(F.text == MY_ORDERS_BUTTON)
+@router.message(F.text.in_(MY_ORDERS_BUTTONS))
 async def show_orders(message: Message):
     await show_list(message)
 
@@ -166,7 +164,7 @@ async def load_card(callback: CallbackQuery, order_id: int) -> dict | None:
             order_id,
             callback.from_user.id,
         )
-        await callback.answer(NOT_FOUND_TEXT, show_alert=True)
+        await callback.answer(t("order_not_found"), show_alert=True)
 
     return order
 
@@ -208,10 +206,10 @@ async def refresh_order(
         if "message is not modified" not in str(error):
             raise
 
-        await callback.answer("Статус не изменился.")
+        await callback.answer(t("status_unchanged"))
         return
 
-    await callback.answer("Статус обновлён")
+    await callback.answer(t("status_updated"))
 
 
 # ---------- Оплата ----------
@@ -243,14 +241,14 @@ async def pay_order(
     except Exception:
         logger.exception("Не удалось выставить счёт по заказу %s", order["id"])
         await callback.answer(
-            "Не удалось выставить счёт. Попробуйте позже.",
+            t("invoice_failed"),
             show_alert=True,
         )
         return
 
     if not sent:
         await callback.answer(
-            "Оплата для этого заказа сейчас недоступна.",
+            t("payment_unavailable"),
             show_alert=True,
         )
         return
@@ -272,16 +270,18 @@ async def ask_cancel(
 
     if order["paid"] or order["status"] != "new":
         await callback.message.edit_text(
-            PAID_TEXT if order["paid"] else TOO_LATE_TEXT,
+            t("cancel_paid") if order["paid"] else t("cancel_too_late"),
             reply_markup=back_to_order_keyboard(order["id"]),
         )
         await callback.answer()
         return
 
     await callback.message.edit_text(
-        f"Отменить заказ №{order['number']} на "
-        f"{format_money(order['total'])}?\n\n"
-        "Если передумали — вернитесь к заказу.",
+        t(
+            "cancel_ask",
+            number=order["number"],
+            amount=format_money(order["total"]),
+        ),
         reply_markup=cancel_confirm_keyboard(order["id"]),
     )
     await callback.answer()
@@ -309,8 +309,7 @@ async def confirm_cancel(
     except Exception:
         logger.exception("Ошибка отмены заказа %s", order_id)
         await callback.message.edit_text(
-            "Не удалось отменить заказ. Попробуйте ещё раз "
-            "или свяжитесь с оператором.",
+            t("cancel_failed"),
             reply_markup=back_to_order_keyboard(order_id),
         )
         await callback.answer()
@@ -324,20 +323,19 @@ async def confirm_cancel(
         number = order["number"] if order else f"{order_id:06d}"
 
         await callback.message.edit_text(
-            f"Заказ №{number} отменён.\n\n"
-            "Если что-то пошло не так, напишите оператору.",
+            t("cancel_done", number=number),
             reply_markup=after_cancel_keyboard(),
         )
         await callback.answer()
         return
 
     if result == "already_cancelled":
-        await callback.answer("Заказ уже отменён.", show_alert=True)
+        await callback.answer(t("already_cancelled"), show_alert=True)
         return
 
     if result in ("too_late", "paid"):
         await callback.message.edit_text(
-            PAID_TEXT if result == "paid" else TOO_LATE_TEXT,
+            t("cancel_paid") if result == "paid" else t("cancel_too_late"),
             reply_markup=back_to_order_keyboard(order_id),
         )
         await callback.answer()
@@ -348,4 +346,4 @@ async def confirm_cancel(
         order_id,
         callback.from_user.id,
     )
-    await callback.answer(NOT_FOUND_TEXT, show_alert=True)
+    await callback.answer(t("order_not_found"), show_alert=True)

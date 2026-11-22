@@ -1,27 +1,13 @@
 import re
 from decimal import Decimal
 
-
-def validate_address(address: str) -> str | None:
-    """Проверяет адрес доставки."""
-    address = address.strip()
-
-    if len(address) < 10:
-        return "Адрес слишком короткий. Укажите улицу и номер дома."
-
-    if len(address) > 500:
-        return "Адрес слишком длинный. Максимум 500 символов."
-
-    if not re.search(r"\d", address):
-        return "Укажите номер дома в адресе."
-
-    return None
+from bot.i18n import t
 
 
 def validate_address_note(note: str) -> str | None:
     """Проверяет необязательное уточнение адреса (подъезд, этаж, квартира)."""
     if len(note.strip()) > 500:
-        return "Уточнение слишком длинное. Максимум 500 символов."
+        return t("err_note_too_long")
 
     return None
 
@@ -46,7 +32,7 @@ def normalize_phone(raw: str) -> str | None:
 def validate_comment(comment: str) -> str | None:
     """Проверяет длину комментария."""
     if len(comment.strip()) > 500:
-        return "Комментарий слишком длинный. Максимум 500 символов."
+        return t("err_comment_too_long")
 
     return None
 
