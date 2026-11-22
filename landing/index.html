@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nurlight — доставка пиццы через Telegram</title>
+  <meta name="description" content="Пицца и напитки с доставкой по городу. Заказ, оплата и статус — в Telegram-боте Nurlight.">
+  <meta name="theme-color" content="#FFF8EF">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='46' fill='%23F28C28'/%3E%3Ccircle cx='50' cy='50' r='34' fill='%23F7D36B'/%3E%3Ccircle cx='38' cy='40' r='7' fill='%23B3311F'/%3E%3Ccircle cx='60' cy='58' r='7' fill='%23B3311F'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <a class="logo" href="#"><span class="logo-dot"></span>Nurlight</a>
+    <!-- Ссылка на бота — во всех кнопках data-bot -->
+    <a class="btn btn-small" data-bot href="https://t.me/nurlight_delivery_bot">Открыть бота</a>
+  </header>
+
+  <!-- Сцена с коробкой: высокий блок, внутри «прилипшая» сцена; прокрутка открывает крышку -->
+  <section class="unbox" id="unbox">
+    <div class="stage">
+      <div class="intro" data-fade="out">
+        <p class="eyebrow">Доставка по городу</p>
+        <h1>Что внутри?</h1>
+        <p class="hint">Прокрутите вниз <span class="arrow">↓</span></p>
+      </div>
+
+      <div class="scene" aria-hidden="true">
+        <div class="shadow"></div>
+        <div class="box">
+          <div class="face floor"></div>
+          <div class="pizza-wrap">
+            <svg class="pizza" viewBox="0 0 200 200">
+              <defs>
+                <radialGradient id="crust" cx="50%" cy="45%" r="55%">
+                  <stop offset="78%" stop-color="#F0B566"/>
+                  <stop offset="100%" stop-color="#C9792F"/>
+                </radialGradient>
+                <radialGradient id="cheese" cx="45%" cy="40%" r="60%">
+                  <stop offset="0%" stop-color="#FFE38A"/>
+                  <stop offset="100%" stop-color="#F2BE4A"/>
+                </radialGradient>
+              </defs>
+              <circle cx="100" cy="100" r="97" fill="url(#crust)"/>
+              <circle cx="100" cy="100" r="84" fill="#D3472A"/>
+              <path fill="url(#cheese)" d="M100 22c20 2 30 10 44 12 14 10 20 24 30 34 4 18-2 30 2 44-6 16-14 26-24 36-16 6-26 16-44 18-18-2-30-10-44-14-12-10-24-18-30-34-4-16 2-30 0-46 6-14 14-26 26-34 14-8 24-14 40-16z"/>
+              <g fill="#B3311F">
+                <circle cx="70" cy="64" r="13"/><circle cx="128" cy="58" r="12"/>
+                <circle cx="146" cy="108" r="13"/><circle cx="98" cy="102" r="12"/>
+                <circle cx="58" cy="118" r="12"/><circle cx="112" cy="148" r="13"/>
+                <circle cx="72" cy="158" r="9"/>
+              </g>
+              <g fill="#8E2314" opacity=".55">
+                <circle cx="66" cy="60" r="2"/><circle cx="74" cy="68" r="1.6"/><circle cx="124" cy="55" r="2"/>
+                <circle cx="150" cy="104" r="1.8"/><circle cx="94" cy="99" r="2"/><circle cx="55" cy="122" r="1.8"/>
+                <circle cx="116" cy="144" r="2"/>
+              </g>
+              <g fill="#3E8E3A">
+                <path d="M92 70c6-8 16-8 20-2-6 8-16 8-20 2z"/>
+                <path d="M126 128c8-2 14 4 12 12-8 2-14-4-12-12z"/>
+                <path d="M46 88c8-4 16 0 16 8-8 4-16 0-16-8z"/>
+              </g>
+              <g fill="#2B2420">
+                <circle cx="150" cy="78" r="5"/><circle cx="84" cy="134" r="5"/><circle cx="118" cy="86" r="4.5"/>
+              </g>
+              <g stroke="#E9A757" stroke-width="2" opacity=".55">
+                <line x1="100" y1="4" x2="100" y2="196"/><line x1="4" y1="100" x2="196" y2="100"/>
+                <line x1="32" y1="32" x2="168" y2="168"/><line x1="168" y1="32" x2="32" y2="168"/>
+              </g>
+            </svg>
+            <div class="steam"><span></span><span></span><span></span></div>
+          </div>
+          <div class="face wall front"></div>
+          <div class="face wall back"></div>
+          <div class="face wall left"></div>
+          <div class="face wall right"></div>
+          <div class="lid">
+            <div class="face lid-top">
+              <div class="stamp">
+                <strong>Nurlight</strong>
+                <small>pizza delivery</small>
+              </div>
+            </div>
+            <div class="face lid-inside"></div>
+            <div class="face lid-lip"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="reveal" data-fade="in">
+        <h2>Горячая пицца — в один чат</h2>
+        <p>Меню, корзина, оплата картой и статус заказа — всё в Telegram-боте Nurlight. Без регистрации и приложений.</p>
+        <a class="btn" data-bot href="https://t.me/nurlight_delivery_bot">Заказать в Telegram</a>
+      </div>
+    </div>
+  </section>
+
+  <main>
+    <section class="section" id="how">
+      <h2 class="section-title">Как заказать</h2>
+      <ol class="steps">
+        <li class="card"><span class="num">1</span><h3>Откройте бота</h3><p>Нажмите «Заказать в Telegram» — бот откроется в приложении или в браузере.</p></li>
+        <li class="card"><span class="num">2</span><h3>Соберите корзину</h3><p>Выберите пиццу и напитки из меню, укажите адрес и телефон.</p></li>
+        <li class="card"><span class="num">3</span><h3>Оплатите в чате</h3><p>Счёт придёт прямо в чат — оплата картой, не выходя из Telegram.</p></li>
+      </ol>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Почему через Telegram</h2>
+      <div class="features">
+        <div class="card feature"><span class="emoji">⚡</span><h3>Без лишнего</h3><p>Не нужно ставить приложение и придумывать пароль.</p></div>
+        <div class="card feature"><span class="emoji">📦</span><h3>Заказ всегда под рукой</h3><p>«Мои заказы» в боте показывают состав и статус каждого заказа.</p></div>
+        <div class="card feature"><span class="emoji">🤖</span><h3>ИИ-консультант</h3><p>Спросите бота, что взять на компанию или сколько стоит доставка.</p></div>
+        <div class="card feature"><span class="emoji">🛵</span><h3>Доставка</h3><p>Бесплатно от 5 000 ₸. Для заказа меньше стоимость доставки уточнит оператор.</p></div>
+      </div>
+    </section>
+
+    <section class="section cta card">
+      <div>
+        <h2>Проголодались?</h2>
+        <p>Откройте бота — меню уже ждёт.</p>
+      </div>
+      <a class="btn" data-bot href="https://t.me/nurlight_delivery_bot">Заказать в Telegram</a>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <span><span class="logo-dot"></span>Nurlight</span>
+    <span>© 2026 · Дипломный проект</span>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
