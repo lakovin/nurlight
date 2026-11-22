@@ -7,13 +7,14 @@ from django.db.models import Count, DecimalField, ExpressionWrapper, F, Q, Sum
 from django.db.models.functions import TruncDate
 from django.template.response import TemplateResponse
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from .models import Courier, Order, OrderItem
 
 PERIODS = {
-    "7": ("7 дней", 7),
-    "30": ("30 дней", 30),
-    "all": ("Всё время", None),
+    "7": (_("7 дней"), 7),
+    "30": (_("30 дней"), 30),
+    "all": (_("Всё время"), None),
 }
 DEFAULT_PERIOD = "30"
 # Сколько последних дней показывать на графике, если выбрано «Всё время»
@@ -113,7 +114,7 @@ def statistics_view(admin_site):
         label, days = PERIODS[period]
         context = {
             **admin_site.each_context(request),
-            "title": "Статистика",
+            "title": _("Статистика"),
             "period": period,
             "period_label": label,
             "periods": [(key, value[0]) for key, value in PERIODS.items()],

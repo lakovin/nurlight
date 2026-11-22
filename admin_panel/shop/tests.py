@@ -2,7 +2,7 @@ import json
 from decimal import Decimal
 from unittest import mock
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from delivery.models import Category, Client, Courier, Order, OrderItem, Product
@@ -26,6 +26,7 @@ class HelpersTests(TestCase):
                          ["товар", "товара", "товаров", "товаров", "товар"])
 
 
+@override_settings(ROOT_URLCONF="shop.test_urls")
 class ShopTestCase(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -95,7 +96,7 @@ class CheckoutTests(ShopTestCase):
         order = Order.objects.get()
         self.assertRedirects(response, reverse("shop:order_status", args=[order.pk]))
         self.assertEqual(order.status, Order.Status.NEW)
-        self.assertEqual(order.total, Decimal("4300"))
+        self.assertEqual(order.total, Decimal("4800"))  # 4 300 ₸ блюда + 500 ₸ доставка
         self.assertEqual(order.client.phone, "+77001112233")
         self.assertIsNone(order.client.telegram_id)
         self.assertEqual(order.items.count(), 2)

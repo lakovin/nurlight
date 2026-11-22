@@ -1,5 +1,5 @@
 {% extends "admin/base_site.html" %}
-{% load humanize %}
+{% load humanize i18n %}
 
 {% block extrastyle %}
 {{ block.super }}
@@ -28,10 +28,10 @@
 
 {% block breadcrumbs %}
 <div class="breadcrumbs">
-  <a href="{% url 'admin:index' %}">Начало</a>
-  &rsaquo; <a href="{% url 'admin:app_list' app_label='delivery' %}">Доставка</a>
-  &rsaquo; <a href="{% url 'admin:delivery_order_changelist' %}">Заказы</a>
-  &rsaquo; Статистика
+  <a href="{% url 'admin:index' %}">{% translate "Начало" %}</a>
+  &rsaquo; <a href="{% url 'admin:app_list' app_label='delivery' %}">{% translate "Доставка" %}</a>
+  &rsaquo; <a href="{% url 'admin:delivery_order_changelist' %}">{% translate "Заказы" %}</a>
+  &rsaquo; {% translate "Статистика" %}
 </div>
 {% endblock %}
 
@@ -45,32 +45,32 @@
 
   <div class="stats-cards">
     <div class="stats-card">
-      <div class="label">Заказов</div>
+      <div class="label">{% translate "Заказов" %}</div>
       <div class="value">{{ stats.count|intcomma }}</div>
-      <div class="hint">в работе: {{ stats.in_progress }}</div>
+      <div class="hint">{% blocktranslate with n=stats.in_progress %}в работе: {{ n }}{% endblocktranslate %}</div>
     </div>
     <div class="stats-card">
-      <div class="label">Доставлено</div>
+      <div class="label">{% translate "Доставлено" %}</div>
       <div class="value">{{ stats.delivered|intcomma }}</div>
     </div>
     <div class="stats-card">
-      <div class="label">Выручка</div>
+      <div class="label">{% translate "Выручка" %}</div>
       <div class="value">{{ stats.revenue|floatformat:0|intcomma }} ₸</div>
-      <div class="hint">по доставленным заказам</div>
+      <div class="hint">{% translate "по доставленным заказам" %}</div>
     </div>
     <div class="stats-card">
-      <div class="label">Средний чек</div>
+      <div class="label">{% translate "Средний чек" %}</div>
       <div class="value">{{ stats.average_check|floatformat:0|intcomma }} ₸</div>
     </div>
     <div class="stats-card">
-      <div class="label">Отменено</div>
+      <div class="label">{% translate "Отменено" %}</div>
       <div class="value">{{ stats.cancelled|intcomma }}</div>
-      <div class="hint">{{ stats.cancel_rate }}% от всех</div>
+      <div class="hint">{% blocktranslate with n=stats.cancel_rate %}{{ n }}% от всех{% endblocktranslate %}</div>
     </div>
   </div>
 
   <div class="stats-section">
-    <h2>Заказы по дням</h2>
+    <h2>{% translate "Заказы по дням" %}</h2>
     {% if stats.daily_max %}
       <div class="stats-chart">
         {% for d in stats.daily %}
@@ -79,17 +79,17 @@
       </div>
       <div class="stats-chart-axis">
         <span>{{ stats.daily.0.day|date:"d.m" }}</span>
-        <span>максимум {{ stats.daily_max }} в день</span>
+        <span>{% blocktranslate with n=stats.daily_max %}максимум {{ n }} в день{% endblocktranslate %}</span>
         {% with last_day=stats.daily|last %}<span>{{ last_day.day|date:"d.m" }}</span>{% endwith %}
       </div>
     {% else %}
-      <p class="stats-empty">За этот период заказов не было.</p>
+      <p class="stats-empty">{% translate "За этот период заказов не было." %}</p>
     {% endif %}
   </div>
 
   <div class="stats-grid">
     <div class="stats-section">
-      <h2>По статусам</h2>
+      <h2>{% translate "По статусам" %}</h2>
       <table>
         <tbody>
         {% for s in stats.by_status %}
@@ -104,10 +104,10 @@
     </div>
 
     <div class="stats-section">
-      <h2>Популярные товары</h2>
+      <h2>{% translate "Популярные товары" %}</h2>
       {% if stats.top_products %}
       <table>
-        <thead><tr><th>Товар</th><th class="num">Штук</th><th class="num">Сумма, ₸</th></tr></thead>
+        <thead><tr><th>{% translate "Товар" %}</th><th class="num">{% translate "Штук" %}</th><th class="num">{% translate "Сумма" %}, ₸</th></tr></thead>
         <tbody>
         {% for p in stats.top_products %}
           <tr>
@@ -119,19 +119,19 @@
         </tbody>
       </table>
       {% else %}
-        <p class="stats-empty">Нет данных.</p>
+        <p class="stats-empty">{% translate "Нет данных." %}</p>
       {% endif %}
     </div>
 
     <div class="stats-section">
-      <h2>Курьеры</h2>
+      <h2>{% translate "Курьеры" %}</h2>
       {% if stats.couriers %}
       <table>
-        <thead><tr><th>Курьер</th><th class="num">Доставлено</th><th class="num">Сейчас везёт</th></tr></thead>
+        <thead><tr><th>{% translate "Курьер" %}</th><th class="num">{% translate "Доставлено" %}</th><th class="num">{% translate "Сейчас везёт" %}</th></tr></thead>
         <tbody>
         {% for c in stats.couriers %}
           <tr>
-            <td>{{ c.name }}{% if not c.is_active %} <span class="stats-empty">(неактивен)</span>{% endif %}</td>
+            <td>{{ c.name }}{% if not c.is_active %} <span class="stats-empty">{% translate "(неактивен)" %}</span>{% endif %}</td>
             <td class="num">{{ c.delivered }}</td>
             <td class="num">{{ c.active }}</td>
           </tr>
@@ -139,7 +139,7 @@
         </tbody>
       </table>
       {% else %}
-        <p class="stats-empty">Курьеров пока нет.</p>
+        <p class="stats-empty">{% translate "Курьеров пока нет." %}</p>
       {% endif %}
     </div>
   </div>
