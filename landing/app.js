@@ -1,7 +1,21 @@
 // Анимация коробки: прогресс прокрутки блока #unbox (0…1) → CSS-переменные сцены
 (function () {
-  var root = document.documentElement;
   var unbox = document.getElementById("unbox");
+  // Переменные ставим на сцену, а не на всю страницу: иначе каждый кадр пересчитываются стили всех элементов
+  var stage = unbox.querySelector(".stage");
+  var scene = unbox.querySelector(".scene");
+  var size = 0, total = 1, top = 0;
+  var last = {};
+
+  // Размеры меряем только при загрузке и изменении окна, не в каждом кадре
+  function measure() {
+    size = scene.offsetWidth;
+    total = Math.max(1, unbox.offsetHeight - window.innerHeight);
+    top = unbox.getBoundingClientRect().top + window.scrollY;
+  }
+  function set(name, value) {
+    if (last[name] !== value) { last[name] = value; stage.style.setProperty(name, value); }
+  }
   var intro = document.querySelector("[data-fade=out]");
   var reveal = document.querySelector("[data-fade=in]");
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -18,29 +32,26 @@
     var open = seg(p, 0.08, 0.5);      // крышка
     var rise = seg(p, 0.38, 0.72);     // пицца поднимается
     var look = seg(p, 0.2, 0.75);      // камера заглядывает внутрь
-    var size = unbox.querySelector(".scene").offsetWidth;
+    set("--lid", (open * 112).toFixed(1) + "deg");
+    set("--tilt", mix(60, 40, look).toFixed(2) + "deg");
+    set("--turn", mix(-24, -8, look).toFixed(2) + "deg");
+    set("--rise", (rise * size * 0.16).toFixed(1) + "px");
+    set("--spin", (rise * 40).toFixed(1) + "deg");
+    set("--steam", seg(p, 0.45, 0.65).toFixed(2));
 
-    root.style.setProperty("--lid", (open * 112).toFixed(2) + "deg");
-    root.style.setProperty("--tilt", mix(60, 40, look).toFixed(2) + "deg");
-    root.style.setProperty("--turn", mix(-24, -8, look).toFixed(2) + "deg");
-    root.style.setProperty("--rise", (rise * size * 0.16).toFixed(1) + "px");
-    root.style.setProperty("--spin", (rise * 40).toFixed(2) + "deg");
-    root.style.setProperty("--steam", seg(p, 0.45, 0.65).toFixed(3));
-
-    intro.style.opacity = (1 - seg(p, 0, 0.18)).toFixed(3);
     var shown = seg(p, 0.62, 0.86);
-    reveal.style.opacity = shown.toFixed(3);
-    reveal.style.transform = "translateY(" + ((1 - shown) * 30).toFixed(1) + "px)";
-    reveal.style.pointerEvents = shown > 0.5 ? "auto" : "none";
+    set("--intro", (1 - seg(p, 0, 0.18)).toFixed(3));
+    set("--shown", shown.toFixed(3));
+    var interactive = shown > 0.5 ? "auto" : "none";
+    if (last.pe !== interactive) { last.pe = interactive; reveal.style.pointerEvents = interactive; }
   }
 
   function progress() {
-    var rect = unbox.getBoundingClientRect();
-    var total = unbox.offsetHeight - window.innerHeight;
-    return clamp(-rect.top / total);
+    return clamp((window.scrollY - top) / total);
   }
 
   if (reduced) {
+    measure();
     render(1);
   } else {
     var queued = false;
@@ -50,7 +61,8 @@
       requestAnimationFrame(function () { queued = false; render(progress()); });
     };
     window.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
+    window.addEventListener("resize", function () { measure(); update(); });
+    measure();
     render(progress());
   }
 

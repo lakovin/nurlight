@@ -56,8 +56,7 @@ a { color: inherit; }
   position: fixed; inset: 0 0 auto; z-index: 10;
   display: flex; align-items: center; justify-content: space-between;
   padding: 14px max(16px, calc((100vw - 1160px) / 2));
-  background: color-mix(in srgb, var(--bg) 82%, transparent);
-  backdrop-filter: blur(10px);
+  background: color-mix(in srgb, var(--bg) 94%, transparent);
 }
 .logo { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; font-size: 20px; text-decoration: none; }
 .logo-dot {
@@ -86,6 +85,8 @@ a { color: inherit; }
   max-width: 620px;
 }
 .intro, .reveal { grid-area: 1 / 1; }
+.intro { opacity: var(--intro, 1); }
+.reveal { opacity: var(--shown, 0); transform: translateY(calc((1 - var(--shown, 0)) * 30px)); pointer-events: none; }
 .eyebrow { color: var(--primary-dark); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 14px; margin-bottom: 12px; }
 .hint { margin-top: 16px; color: var(--muted); }
 .arrow { display: inline-block; animation: bob 1.4s ease-in-out infinite; }
@@ -99,11 +100,11 @@ a { color: inherit; }
 }
 .shadow {
   position: absolute; left: 8%; right: 8%; top: 62%; height: 34%;
-  border-radius: 50%; background: rgba(110, 70, 30, .28); filter: blur(22px);
+  border-radius: 50%; background: radial-gradient(closest-side, rgba(110, 70, 30, .3), rgba(110, 70, 30, 0));
 }
 .box {
   position: relative; width: 100%; height: 100%;
-  transform-style: preserve-3d;
+  transform-style: preserve-3d; will-change: transform;
   transform: rotateX(var(--tilt)) rotateZ(var(--turn));
 }
 .face { position: absolute; }
@@ -128,9 +129,9 @@ a { color: inherit; }
 .pizza-wrap {
   position: absolute; left: 7%; top: 7%; width: 86%; height: 86%;
   transform-style: preserve-3d;
-  transform: translateZ(calc(2px + var(--rise))) rotateZ(var(--spin));
+  transform: translateZ(calc(2px + var(--rise))) rotateZ(var(--spin)); will-change: transform;
 }
-.pizza { width: 100%; height: 100%; filter: drop-shadow(0 6px 6px rgba(90, 40, 10, .35)); }
+.pizza { width: 100%; height: 100%; }
 .steam {
   position: absolute; left: 30%; right: 30%; top: 50%; height: 60%;
   transform-origin: 50% 0;
@@ -140,8 +141,8 @@ a { color: inherit; }
 }
 .steam span {
   width: 14%; height: 100%; border-radius: 50%;
-  background: linear-gradient(to top, rgba(255,255,255,.9), rgba(255,255,255,0));
-  filter: blur(6px);
+  background: radial-gradient(50% 50% at 50% 60%, rgba(255,255,255,.75), rgba(255,255,255,0));
+  will-change: transform, opacity;
   animation: steam 2.4s ease-in-out infinite;
   transform-origin: 50% 100%;
 }
@@ -158,7 +159,7 @@ a { color: inherit; }
   position: absolute;
   width: calc(var(--s) + 6px); height: calc(var(--s) + 6px); left: -3px; top: -3px;
   transform-style: preserve-3d;
-  transform-origin: 50% 0;
+  transform-origin: 50% 0; will-change: transform;
   transform: translateZ(calc(var(--h) + 1px)) rotateX(var(--lid));
 }
 .lid-top, .lid-inside { inset: 0; backface-visibility: hidden; border-radius: 3px; }
