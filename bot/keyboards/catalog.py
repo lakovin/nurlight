@@ -35,15 +35,12 @@ def products_keyboard(products: list[Product]):
 
 
 def product_keyboard(product: Product, qty: int = 0):
+    # Выбор количества виден сразу (0 шт); первое нажатие на ➕ кладёт товар в корзину
     builder = InlineKeyboardBuilder()
-    if qty == 0:
-        builder.button(text="➕ В корзину", callback_data=CartCallback(action="add", id=product.id))
-        builder.adjust(1)
-    else:
-        builder.button(text="➖", callback_data=CartCallback(action="minus", id=product.id))
-        builder.button(text=f"{qty} шт", callback_data=CartCallback(action="noop"))
-        builder.button(text="➕", callback_data=CartCallback(action="add", id=product.id))
-        builder.button(text="🛒 Открыть корзину", callback_data=CartCallback(action="show"))
-        builder.adjust(3, 1)
+    builder.button(text="➖", callback_data=CartCallback(action="minus", id=product.id))
+    builder.button(text=f"{qty} шт", callback_data=CartCallback(action="noop"))
+    builder.button(text="➕", callback_data=CartCallback(action="add", id=product.id))
+    builder.button(text="🛒 Открыть корзину", callback_data=CartCallback(action="show"))
+    builder.adjust(3, 1)
     builder.button(text="⬅️ Назад", callback_data=CategoryCallback(id=product.category_id))
     return builder.as_markup()
