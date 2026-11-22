@@ -128,6 +128,33 @@ a { color: inherit; }
 
 
 
+/* Переключатель языка в шапке */
+.top-right { display: flex; align-items: center; gap: 12px; }
+.lang { display: inline-flex; gap: 2px; padding: 2px; border-radius: 8px; border: 1px solid rgba(31, 26, 23, .14); }
+.lang button {
+  font: inherit; font-size: 13px; font-weight: 600; color: var(--muted); background: none; border: 0;
+  padding: 6px 8px; border-radius: 6px; cursor: pointer; transition: background-color 150ms var(--ease), color 150ms var(--ease);
+}
+.lang button:hover { color: var(--text); }
+.lang button[aria-pressed="true"] { background: var(--surface); color: var(--text); }
+.nw { white-space: nowrap; }
+
+/* Геолокация в чате вместо адреса */
+.msg.loc { padding: 4px 4px 6px; }
+.msg.loc .map {
+  width: 180px; height: 90px; border-radius: 10px; margin-bottom: 6px; position: relative;
+  background:
+    linear-gradient(90deg, transparent 46%, #fff 46% 54%, transparent 54%) 0 0 / 60px 100%,
+    linear-gradient(transparent 46%, #fff 46% 54%, transparent 54%) 0 0 / 100% 45px,
+    #DCE8D2;
+}
+.msg.loc .pin {
+  position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; margin: -14px 0 0 -7px;
+  border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #E5484D; box-shadow: 0 0 0 3px #fff;
+}
+.msg.loc b, .msg.loc time { margin-left: 6px; }
+.msg.loc { font-size: 13px; }
+
 /* ---------- Секции ---------- */
 main { position: relative; z-index: 1; }
 .section { max-width: 1160px; margin: 0 auto; padding: 48px 16px; }
@@ -163,6 +190,7 @@ main { position: relative; z-index: 1; }
   .cta { padding: 24px; margin: 32px 16px 64px; }
   .btn { width: 100%; }
   .btn-quiet { width: auto; }
+  .top .btn-quiet { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,12 +1,12 @@
 from decimal import Decimal
 
 from django.contrib.auth.models import Group, User
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from . import payments
 from .models import Category, Client, Courier, Order, OrderItem, Product
-from .roles import MANAGER, OPERATOR
+from .roles import KITCHEN, MANAGER, OPERATOR
 from .statistics import collect_statistics
 
 
@@ -113,7 +113,8 @@ class OrderAdminTests(DeliveryTestCase):
         self.assertNotContains(response, "Статистика</a>")
 
     def test_assigning_courier_hands_order_over(self):
-        order = self.make_order(status=Order.Status.ACCEPTED)
+        # Курьеру передаётся только готовый заказ
+        order = self.make_order(status=Order.Status.READY)
         url = reverse("admin:delivery_order_change", args=[order.pk])
         response = self.client.get(url)
         data = {
@@ -181,14 +182,16 @@ class PaymentTests(DeliveryTestCase):
         self.assertEqual(payments.amount(Decimal("2900.00")), 290000)
 
     def test_check_allows_correct_payment(self):
-        order = self.make_order(quantity=2)
+        order = self.make_order(quantity=2)  # 5 800 ₸ — доставка бесплатная
         self.assertIsNone(payments.check_before_payment(payments.invoice_payload(order), 1, 580000, "KZT"))
+        small = self.make_order(quantity=1)  # 2 900 ₸ + 500 ₸ доставки — один счёт на всё
+        self.assertIsNone(payments.check_before_payment(payments.invoice_payload(small), 1, 340000, "KZT"))
 
     def test_check_rejects_wrong_amount_foreign_cancelled(self):
         order = self.make_order()
         payload = payments.invoice_payload(order)
         self.assertIn("Сумма", payments.check_before_payment(payload, 1, 100, "KZT"))
-        self.assertIn("не найден", payments.check_before_payment("pizza:1", 1, 290000, "KZT"))
+        self.assertIn("не найден", payments.check_before_payment("delivery:1", 1, 290000, "KZT"))
         self.assertIn("не найден", payments.check_before_payment(payload, 999, 290000, "KZT"))
         self.assertIn("не найден", payments.check_before_payment("order:abc", 1, 290000, "KZT"))
         cancelled = self.make_order(status=Order.Status.CANCELLED)
@@ -224,43 +227,112 @@ class PaymentTests(DeliveryTestCase):
         self.assertEqual(order.payment_status, Order.PaymentStatus.UNPAID)
         self.assertEqual(order.telegram_charge_id, "")
 
-    def pay_delivery(self, order, total=None, charge="tg_d1"):
-        total = payments.amount(order.delivery_price) if total is None else total
-        return payments.mark_paid(payments.delivery_invoice_payload(order), 1, total, "KZT", charge, "ch_d1")
 
-    def test_delivery_invoice_only_after_operator_sets_price(self):
-        order = self.make_order()
-        payload = payments.delivery_invoice_payload(order)
-        self.assertFalse(payments.delivery_due(order))
-        self.assertIn("не назначена", payments.check_before_payment(payload, 1, 50000, "KZT"))
-        order.delivery_price = Decimal("0")
-        self.assertFalse(payments.delivery_due(order))  # бесплатная доставка — счёт не нужен
-        order.delivery_price = Decimal("800")
-        order.save()
-        self.assertTrue(payments.delivery_due(order))
-        self.assertIsNone(payments.check_before_payment(payload, 1, 80000, "KZT"))
-        self.assertIn("Сумма", payments.check_before_payment(payload, 1, 290000, "KZT"))
+class DeliveryFeeTests(DeliveryTestCase):
+    """Доставка 500 ₸, бесплатно от 5 000 ₸ — входит в сумму заказа."""
 
-    def test_delivery_paid_separately_from_goods(self):
+    def test_fee_added_below_threshold(self):
+        order = self.make_order(quantity=1)
+        self.assertEqual(order.items_total, Decimal("2900"))
+        self.assertEqual(order.delivery_fee, Decimal("500"))
+        self.assertEqual(order.total, Decimal("3400"))
+
+    def test_free_from_threshold(self):
+        order = self.make_order(quantity=2)
+        self.assertEqual(order.delivery_fee, Decimal("0"))
+        self.assertEqual(order.total, Decimal("5800"))
+
+    @override_settings(DELIVERY={"fee": Decimal("700"), "free_from": Decimal("10000")})
+    def test_rules_come_from_settings(self):
+        order = self.make_order(quantity=2)
+        self.assertEqual(order.total, Decimal("6500"))
+
+
+class GeolocationTests(DeliveryTestCase):
+    def test_map_link_only_with_coordinates(self):
         order = self.make_order()
-        order.delivery_price = Decimal("800")
-        order.save()
-        self.assertTrue(self.pay_delivery(order))
-        self.assertFalse(self.pay_delivery(order, charge="tg_d2"))  # повторное сообщение
+        self.assertEqual(order.map_url, "")
+        order.latitude, order.longitude = Decimal("43.238949"), Decimal("76.889709")
+        self.assertEqual(order.map_url, "https://www.google.com/maps?q=43.238949,76.889709")
+
+    def test_address_text_is_optional(self):
+        order = Order.objects.create(client=self.client_obj, latitude=Decimal("43.2"), longitude=Decimal("76.9"))
+        self.assertEqual(order.address, "")
+
+
+class KitchenTests(DeliveryTestCase):
+    def setUp(self):
+        self.client.force_login(self.make_staff("cook", KITCHEN))
+        self.url = reverse("admin:delivery_kitchenorder_changelist")
+
+    def test_kitchen_sees_only_its_orders(self):
+        visible = [self.make_order(status=s) for s in Order.KITCHEN_STATUSES]
+        hidden = [self.make_order(status=s) for s in (Order.Status.NEW, Order.Status.IN_TRANSIT, Order.Status.CANCELLED)]
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        shown = set(response.context["cl"].queryset.values_list("pk", flat=True))
+        self.assertEqual(shown, {o.pk for o in visible})
+        self.assertFalse(shown & {o.pk for o in hidden})
+
+    def test_kitchen_cannot_open_orders_or_products(self):
+        self.assertEqual(self.client.get(reverse("admin:delivery_order_changelist")).status_code, 403)
+        self.assertEqual(self.client.get(reverse("admin:delivery_product_changelist")).status_code, 403)
+
+    def test_actions_move_order_from_accepted_to_ready(self):
+        order = self.make_order(status=Order.Status.ACCEPTED)
+        for action, expected in (("start_cooking", Order.Status.COOKING),
+                                 ("start_packing", Order.Status.PACKING),
+                                 ("mark_ready", Order.Status.READY)):
+            self.client.post(self.url, {"action": action, "_selected_action": [order.pk]})
+            order.refresh_from_db()
+            self.assertEqual(order.status, expected)
+
+    def test_ready_skips_orders_not_cooking(self):
+        order = self.make_order(status=Order.Status.ACCEPTED)
+        self.client.post(self.url, {"action": "mark_ready", "_selected_action": [order.pk]})
         order.refresh_from_db()
-        self.assertIsNotNone(order.delivery_paid_at)
-        self.assertEqual(order.delivery_telegram_charge_id, "tg_d1")
-        self.assertEqual(order.payment_status, Order.PaymentStatus.UNPAID)  # товары не тронуты
-        self.assertFalse(payments.delivery_due(order))
-        self.assertIn("уже оплачена", payments.check_before_payment(payments.delivery_invoice_payload(order), 1, 80000, "KZT"))
-        self.assertTrue(self.pay(order))  # товары оплачиваются своим счётом
+        self.assertEqual(order.status, Order.Status.ACCEPTED)
 
-    def test_delivery_price_below_telegram_minimum_is_rejected(self):
-        from django.core.exceptions import ValidationError
-        order = self.make_order()
-        order.delivery_price = Decimal("500")
-        with self.assertRaises(ValidationError):
-            order.full_clean()
-        for ok in (Decimal("0"), Decimal("518"), Decimal("1000")):
-            order.delivery_price = ok
-            order.full_clean()
+    def test_status_choices_limited_to_kitchen(self):
+        self.make_order(status=Order.Status.COOKING)
+        response = self.client.get(self.url)
+        values = {value for value, _ in response.context["cl"].formset.forms[0].fields["status"].choices}
+        self.assertEqual(values, set(Order.KITCHEN_STATUSES))
+
+
+class ShopDisabledTests(TestCase):
+    def test_root_redirects_to_panel(self):
+        response = self.client.get("/")
+        self.assertRedirects(response, "/admin/", fetch_redirect_response=False)
+        self.assertEqual(self.client.get("/menu/").status_code, 404)
+
+
+class LanguageTests(DeliveryTestCase):
+    """Панель на трёх языках: переключатель в шапке сохраняет выбор."""
+
+    def setUp(self):
+        self.client.force_login(self.make_staff("boss", MANAGER))
+
+    def switch(self, code):
+        self.client.post(reverse("set_language"), {"language": code, "next": "/admin/"})
+
+    def test_switcher_in_header(self):
+        response = self.client.get(reverse("admin:index"))
+        for code in ("ru", "kk", "en"):
+            self.assertContains(response, f'value="{code}"')
+
+    def test_kazakh_and_english(self):
+        self.make_order(status=Order.Status.COOKING)
+        self.switch("kk")
+        response = self.client.get(reverse("admin:delivery_order_changelist"))
+        self.assertContains(response, "Тапсырыстар")
+        self.assertContains(response, "Дайындалуда")
+        self.switch("en")
+        response = self.client.get(reverse("admin:delivery_kitchenorder_changelist"))
+        self.assertContains(response, "Kitchen")
+        self.assertContains(response, "Start cooking")
+
+    def test_statistics_page_translated(self):
+        self.switch("en")
+        response = self.client.get(reverse("admin:delivery_order_statistics"))
+        self.assertContains(response, "Average order")

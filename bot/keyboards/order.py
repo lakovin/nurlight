@@ -38,6 +38,32 @@ phone_keyboard = ReplyKeyboardMarkup(
 )
 
 
+LOCATION_BUTTON = "📍 Отправить геолокацию"
+SKIP_ADDRESS_BUTTON = "Пропустить"
+
+# Адрес клиент указывает только геолокацией
+location_keyboard = ReplyKeyboardMarkup(
+    keyboard=[
+        [
+            KeyboardButton(
+                text=LOCATION_BUTTON,
+                request_location=True
+            )
+        ],
+        [KeyboardButton(text=CANCEL_BUTTON)]
+    ],
+    resize_keyboard=True
+)
+
+# Необязательное уточнение адреса (подъезд, этаж, квартира)
+address_note_keyboard = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text=SKIP_ADDRESS_BUTTON)],
+        [KeyboardButton(text=CANCEL_BUTTON)]
+    ],
+    resize_keyboard=True
+)
+
 KEEP_PHONE_PREFIX = "✅ Оставить"
 
 
@@ -94,7 +120,11 @@ def edit_keyboard():
     builder = InlineKeyboardBuilder()
 
     builder.button(
-        text="📍 Адрес",
+        text="📍 Геолокация",
+        callback_data=OrderCallback(action="edit_location")
+    )
+    builder.button(
+        text="🏠 Уточнение адреса",
         callback_data=OrderCallback(action="edit_address")
     )
     builder.button(
@@ -110,7 +140,7 @@ def edit_keyboard():
         callback_data=OrderCallback(action="back")
     )
 
-    builder.adjust(3, 1)
+    builder.adjust(2, 2, 1)
     return builder.as_markup()
 
 

@@ -16,65 +16,73 @@
   <header class="top">
     <a class="logo" href="#"><span class="logo-dot"></span>Nurlight</a>
     <!-- Ссылка на бота — во всех кнопках data-bot -->
-    <a class="btn btn-quiet" data-bot href="https://t.me/nurlight_delivery_bot">Открыть бота</a>
+    <div class="top-right">
+      <!-- Язык страницы: тексты в app.js (I18N), выбор запоминается в браузере -->
+      <div class="lang" role="group" aria-label="Язык / Тіл / Language">
+        <button type="button" data-lang="ru" aria-pressed="true">RU</button>
+        <button type="button" data-lang="kk" aria-pressed="false">KZ</button>
+        <button type="button" data-lang="en" aria-pressed="false">EN</button>
+      </div>
+      <a class="btn btn-quiet" data-bot data-i18n="open_bot" href="https://t.me/nurlight_delivery_bot">Открыть бота</a>
+    </div>
   </header>
 
   <!-- Первый экран: текст и шаги слева, телефон с чатом бота справа — показывает, как проходит заказ -->
   <section class="hero">
     <div>
-      <p class="eyebrow">Доставка по городу</p>
-      <h1>Пицца с доставкой — заказ через <span style="white-space:nowrap">Telegram-бот</span></h1>
-      <p class="lead">Меню, корзина и статус заказа — в одном чате. Приложение и регистрация не нужны.</p>
+      <p class="eyebrow" data-i18n="eyebrow">Доставка по городу</p>
+      <h1 data-i18n-html="h1">Пицца с доставкой — заказ через <span class="nw">Telegram-бот</span></h1>
+      <p class="lead" data-i18n="lead">Меню, корзина и статус заказа — в одном чате. Приложение и регистрация не нужны.</p>
 
       <ol class="steps" id="steps">
-        <li><button class="step" data-stage="0"><span class="n">1</span><span><b>Откройте бота</b><small>/start — и меню под рукой</small></span></button></li>
-        <li><button class="step" data-stage="1"><span class="n">2</span><span><b>Соберите корзину</b><small>Блюда, адрес и телефон</small></span></button></li>
-        <li><button class="step" data-stage="2"><span class="n">3</span><span><b>Следите за заказом</b><small>Статус обновляется в чате</small></span></button></li>
+        <li><button class="step" data-stage="0"><span class="n">1</span><span><b data-i18n="s1b">Откройте бота</b><small data-i18n="s1s">/start — и меню под рукой</small></span></button></li>
+        <li><button class="step" data-stage="1"><span class="n">2</span><span><b data-i18n="s2b">Соберите корзину</b><small data-i18n="s2s">Блюда и геолокация для доставки</small></span></button></li>
+        <li><button class="step" data-stage="2"><span class="n">3</span><span><b data-i18n="s3b">Следите за заказом</b><small data-i18n="s3s">Статус обновляется в чате</small></span></button></li>
       </ol>
 
-      <a class="btn main" data-bot href="https://t.me/nurlight_delivery_bot">Заказать в Telegram</a>
+      <a class="btn main" data-bot data-i18n="order" href="https://t.me/nurlight_delivery_bot">Заказать в Telegram</a>
     </div>
 
     <div class="phone-wrap">
-      <div class="phone" aria-label="Пример заказа в Telegram-боте Nurlight">
+      <div class="phone" data-i18n-label="phone_label" aria-label="Пример заказа в Telegram-боте Nurlight">
         <div class="screen">
           <div class="tg-head">
             <span class="tg-back">‹</span>
             <span class="tg-ava"></span>
-            <span><span class="tg-name">Nurlight Delivery</span><br><span class="tg-sub">бот</span></span>
+            <span><span class="tg-name">Nurlight Delivery</span><br><span class="tg-sub" data-i18n="tg_sub">бот</span></span>
           </div>
           <div class="feed" id="feed" aria-live="polite"></div>
-          <div class="tg-input"><span>Сообщение</span></div>
+          <div class="tg-input"><span data-i18n="tg_input">Сообщение</span></div>
         </div>
       </div>
-      <!-- TODO: когда в боте заработает оплата, добавить в сценарий сообщение со счётом (app.js) -->
+      <!-- TODO: когда в боте заработает оплата, добавить в сценарий сообщение со счётом (app.js, scenario) -->
     </div>
   </section>
 
 
   <main>
     <section class="section">
-      <h2 class="section-title">Почему через Telegram</h2>
+      <h2 class="section-title" data-i18n="why">Почему через Telegram</h2>
       <div class="features">
-        <div class="card feature"><h3>Не нужно приложение</h3><p>Бот открывается прямо в Telegram — без установки и пароля.</p></div>
-        <div class="card feature"><h3>Состав и статус каждого заказа</h3><p>Раздел «Мои заказы» показывает, что заказано и на каком этапе заказ.</p></div>
-        <div class="card feature"><h3>Ответы на вопросы в чате</h3><p>Спросите бота, что взять на компанию или сколько стоит доставка — ответит ИИ-консультант.</p></div>
-        <div class="card feature"><h3>Доставка бесплатно от 5 000 ₸</h3><p>Для заказа меньше стоимость доставки назовёт оператор.</p></div>
+        <div class="card feature"><h3 data-i18n="f1h">Не нужно приложение</h3><p data-i18n="f1p">Бот открывается прямо в Telegram — без установки и пароля.</p></div>
+        <div class="card feature"><h3 data-i18n="f2h">Состав и статус каждого заказа</h3><p data-i18n="f2p">Раздел «Мои заказы» показывает, что заказано и на каком этапе заказ.</p></div>
+        <div class="card feature"><h3 data-i18n="f3h">Ответы на вопросы в чате</h3><p data-i18n="f3p">Спросите бота, что взять на компанию или сколько стоит доставка — ответит ИИ-консультант.</p></div>
+        <div class="card feature"><h3 data-i18n="f4h">Доставка 500 ₸</h3><p data-i18n="f4p">От 5 000 ₸ — бесплатно. Адрес не нужно печатать: достаточно отправить геолокацию.</p></div>
       </div>
     </section>
 
     <section class="section cta card">
       <div>
-        <h2>Меню и цены — в боте</h2>
-        <p>@nurlight_delivery_bot в Telegram</p>
+        <h2 data-i18n="cta_h">Меню и цены — в боте</h2>
+        <p data-i18n="cta_p">@nurlight_delivery_bot в Telegram</p>
       </div>
-      <a class="btn" data-bot href="https://t.me/nurlight_delivery_bot">Заказать в Telegram</a>
+      <a class="btn" data-bot data-i18n="order" href="https://t.me/nurlight_delivery_bot">Заказать в Telegram</a>
     </section>
   </main>
 
   <footer class="foot">
     <span><span class="logo-dot"></span>Nurlight</span>
-    <span>© 2026 · Дипломный проект</span>
+    <span data-i18n="foot">© 2026 · Дипломный проект</span>
   </footer>
 
   <template id="pizza">

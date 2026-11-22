@@ -1,3 +1,4 @@
+from decimal import Decimal
 from pathlib import Path
 import os
 
@@ -37,6 +38,9 @@ INSTALLED_APPS = [
     "shop",
 ]
 
+# Клиентский сайт-магазин (приложение shop) выключен: заказы принимает бот. 1 — включить обратно
+SHOP_ENABLED = os.getenv("SHOP_ENABLED", "0") == "1"
+
 # Контакты на сайте для клиентов; пустое значение — блок не показывается
 SHOP = {
     "phone": os.getenv("SHOP_PHONE", ""),
@@ -48,6 +52,8 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    # Язык панели: русский, казахский, английский (переключатель в шапке админки)
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -60,7 +66,8 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        # Свои шаблоны проекта — раньше шаблонов приложений (переключатель языка в admin/base_site.html)
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -74,6 +81,12 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "config.wsgi.application"
+
+# Доставка: фиксированная цена, бесплатно от порога (входит в сумму заказа, Order.recalculate_total)
+DELIVERY = {
+    "fee": Decimal(os.getenv("DELIVERY_FEE", "500")),
+    "free_from": Decimal(os.getenv("DELIVERY_FREE_FROM", "5000")),
+}
 
 # Пути SQLite в DATABASE_URL считаются от корня репозитория
 _db_url = os.getenv("DATABASE_URL", "sqlite:///db.sqlite3")
@@ -100,6 +113,12 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 LANGUAGE_CODE = "ru"
+LANGUAGES = [
+    ("ru", "Русский"),
+    ("kk", "Қазақша"),
+    ("en", "English"),
+]
+LOCALE_PATHS = [BASE_DIR / "locale"]
 TIME_ZONE = "Asia/Almaty"
 USE_I18N = True
 USE_TZ = True

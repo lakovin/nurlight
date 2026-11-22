@@ -17,11 +17,10 @@ from bot.keyboards.my_orders import (
     orders_list_keyboard,
     retry_list_keyboard,
 )
-from bot.services.delivery import order_delivery_line
+from bot.services.delivery import delivery_text
 from bot.services.notifications import mark_known
 from bot.services.payment import (
     available as payment_enabled,
-    send_delivery_invoice,
     send_order_invoice,
 )
 from bot.services.my_orders import (
@@ -91,12 +90,8 @@ def format_order_card(order: dict) -> str:
 
     lines.extend([
         "",
-        f"Товары: {format_money(order['total'])}",
-        order_delivery_line(
-            order["total"],
-            order["delivery_price"],
-            order["delivery_paid"],
-        ),
+        f"Блюда: {format_money(order['items_total'])}",
+        delivery_text(order["delivery_fee"]),
         f"<b>Итого: {format_money(order['total'])}</b>",
         *(
             [f"Оплата: {'✅ оплачен' if order['paid'] else 'не оплачен'}"]
@@ -104,7 +99,15 @@ def format_order_card(order: dict) -> str:
             else []
         ),
         "",
-        f"Адрес: {html.escape(order['address'])}",
+        *(
+            [
+                '📍 Геолокация: <a href="https://www.google.com/maps?q='
+                f'{order["latitude"]},{order["longitude"]}">точка на карте</a>'
+            ]
+            if order["latitude"] is not None
+            else []
+        ),
+        f"Уточнение адреса: {html.escape(order['address'] or '—')}",
         f"Телефон: {html.escape(phone)}",
         f"Комментарий: {html.escape(comment)}",
     ])
@@ -213,14 +216,12 @@ async def refresh_order(
 
 # ---------- Оплата ----------
 
-@router.callback_query(
-    MyOrdersCallback.filter(F.action.in_({"pay", "pay_delivery"}))
-)
+@router.callback_query(MyOrdersCallback.filter(F.action == "pay"))
 async def pay_order(
     callback: CallbackQuery,
     callback_data: MyOrdersCallback,
 ):
-    """Выставляет счёт: за товары или отдельно за доставку."""
+    """Выставляет один счёт на весь заказ (блюда + доставка)."""
 
     order = await load_card(callback, callback_data.order_id)
 
@@ -228,24 +229,17 @@ async def pay_order(
         return
 
     try:
-        if callback_data.action == "pay_delivery":
-            sent = order["delivery_due"] and await send_delivery_invoice(
+        sent = (
+            not order["paid"]
+            and order["status"] != "cancelled"
+            and await send_order_invoice(
                 callback.message,
                 order["id"],
                 order["number"],
-                order["delivery_price"],
+                order["items_total"],
+                order["delivery_fee"],
             )
-        else:
-            sent = (
-                not order["paid"]
-                and order["status"] != "cancelled"
-                and await send_order_invoice(
-                    callback.message,
-                    order["id"],
-                    order["number"],
-                    order["total"],
-                )
-            )
+        )
     except Exception:
         logger.exception("Не удалось выставить счёт по заказу %s", order["id"])
         await callback.answer(

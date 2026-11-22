@@ -1,0 +1,414 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-22 23:06+0500\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: kk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+
+#: config/urls.py:7
+msgid "Nurlight — панель оператора"
+msgstr "Nurlight — оператор панелі"
+
+#: config/urls.py:9
+msgid "Управление заказами"
+msgstr "Тапсырыстарды басқару"
+
+#: delivery/admin.py:13
+msgid "Открыть на карте"
+msgstr "Картадан ашу"
+
+#: delivery/admin.py:60 delivery/admin.py:159
+msgid "Номер"
+msgstr "Нөмір"
+
+#: delivery/admin.py:64
+msgid "Куда"
+msgstr "Қайда"
+
+#: delivery/admin.py:68
+msgid "На карте"
+msgstr "Картада"
+
+#: delivery/admin.py:102
+#, python-format
+msgid "Обновлено заказов: %(n)s."
+msgstr "Жаңартылған тапсырыстар: %(n)s."
+
+#: delivery/admin.py:104
+#, python-format
+msgid "Пропущено (неподходящий статус): %(n)s."
+msgstr "Өткізіліп жіберілді (мәртебесі сәйкес емес): %(n)s."
+
+#: delivery/admin.py:106
+msgid "Принять выбранные заказы"
+msgstr "Таңдалған тапсырыстарды қабылдау"
+
+#: delivery/admin.py:110
+msgid "Отменить выбранные заказы"
+msgstr "Таңдалған тапсырыстардан бас тарту"
+
+#: delivery/admin.py:134 delivery/models.py:103
+msgid "Статус"
+msgstr "Мәртебе"
+
+#: delivery/admin.py:163
+msgid "Блюда"
+msgstr "Тағамдар"
+
+#: delivery/admin.py:186
+msgid "Начать готовить"
+msgstr "Дайындауды бастау"
+
+#: delivery/admin.py:190
+msgid "Упаковать"
+msgstr "Орау"
+
+#: delivery/admin.py:194
+msgid "Готово"
+msgstr "Дайын"
+
+#: delivery/apps.py:9 delivery/models.py:121
+#: delivery/templates/admin/delivery/statistics.html:32
+msgid "Доставка"
+msgstr "Жеткізу"
+
+#: delivery/models.py:9
+msgid "Русский"
+msgstr "Русский"
+
+#: delivery/models.py:10
+msgid "Қазақша"
+msgstr "Қазақша"
+
+#: delivery/models.py:16 delivery/models.py:61
+msgid "Имя"
+msgstr "Аты"
+
+#: delivery/models.py:17 delivery/models.py:62
+msgid "Телефон"
+msgstr "Телефон"
+
+#: delivery/models.py:18 delivery/models.py:190
+msgid "Язык"
+msgstr "Тіл"
+
+#: delivery/models.py:19
+msgid "Дата регистрации"
+msgstr "Тіркелген күні"
+
+#: delivery/models.py:22 delivery/models.py:94
+msgid "Клиент"
+msgstr "Клиент"
+
+#: delivery/models.py:23
+msgid "Клиенты"
+msgstr "Клиенттер"
+
+#: delivery/models.py:30 delivery/models.py:43
+msgid "Название"
+msgstr "Атауы"
+
+#: delivery/models.py:31
+msgid "Порядок"
+msgstr "Реті"
+
+#: delivery/models.py:34 delivery/models.py:47
+msgid "Категория"
+msgstr "Санат"
+
+#: delivery/models.py:35
+msgid "Категории"
+msgstr "Санаттар"
+
+#: delivery/models.py:44
+msgid "Описание"
+msgstr "Сипаттама"
+
+#: delivery/models.py:45
+msgid "Цена"
+msgstr "Бағасы"
+
+#: delivery/models.py:49
+msgid "Доступен"
+msgstr "Қолжетімді"
+
+#: delivery/models.py:52 delivery/models.py:175
+#: delivery/templates/admin/delivery/statistics.html:110
+msgid "Товар"
+msgstr "Тауар"
+
+#: delivery/models.py:53
+msgid "Товары"
+msgstr "Тауарлар"
+
+#: delivery/models.py:64
+msgid "Активен"
+msgstr "Белсенді"
+
+#: delivery/models.py:67 delivery/models.py:101
+#: delivery/templates/admin/delivery/statistics.html:130
+msgid "Курьер"
+msgstr "Курьер"
+
+#: delivery/models.py:68 delivery/templates/admin/delivery/statistics.html:127
+msgid "Курьеры"
+msgstr "Курьерлер"
+
+#: delivery/models.py:75
+msgid "Не оплачен"
+msgstr "Төленбеген"
+
+#: delivery/models.py:76 delivery/models.py:116
+msgid "Оплачен"
+msgstr "Төленген"
+
+#: delivery/models.py:83
+msgid "Новый"
+msgstr "Жаңа"
+
+#: delivery/models.py:84
+msgid "Принят"
+msgstr "Қабылданды"
+
+#: delivery/models.py:86
+msgid "Готовится"
+msgstr "Дайындалуда"
+
+#: delivery/models.py:87
+msgid "Упаковывается"
+msgstr "Оралуда"
+
+#: delivery/models.py:88
+msgid "Готов"
+msgstr "Дайын"
+
+#: delivery/models.py:89
+msgid "Передан курьеру"
+msgstr "Курьерге берілді"
+
+#: delivery/models.py:90
+msgid "В пути"
+msgstr "Жолда"
+
+#: delivery/models.py:91
+msgid "Доставлен"
+msgstr "Жеткізілді"
+
+#: delivery/models.py:92
+msgid "Отменён"
+msgstr "Бас тартылды"
+
+#: delivery/models.py:105
+msgid "Адрес"
+msgstr "Мекенжай"
+
+#: delivery/models.py:106
+msgid "Широта"
+msgstr "Ендік"
+
+#: delivery/models.py:107
+msgid "Долгота"
+msgstr "Бойлық"
+
+#: delivery/models.py:108 delivery/templates/admin/delivery/statistics.html:110
+msgid "Сумма"
+msgstr "Сомасы"
+
+#: delivery/models.py:109
+msgid "Комментарий"
+msgstr "Түсініктеме"
+
+#: delivery/models.py:113
+msgid "Оплата"
+msgstr "Төлем"
+
+#: delivery/models.py:118
+msgid "Платёж в Telegram"
+msgstr "Telegram-дағы төлем"
+
+#: delivery/models.py:119
+msgid "Платёж в Stripe"
+msgstr "Stripe-тағы төлем"
+
+#: delivery/models.py:122
+msgid "Создан"
+msgstr "Құрылды"
+
+#: delivery/models.py:123
+msgid "Обновлён"
+msgstr "Жаңартылды"
+
+#: delivery/models.py:126 delivery/models.py:174
+msgid "Заказ"
+msgstr "Тапсырыс"
+
+#: delivery/models.py:127 delivery/templates/admin/delivery/statistics.html:33
+msgid "Заказы"
+msgstr "Тапсырыстар"
+
+#: delivery/models.py:129
+msgid "Может смотреть статистику"
+msgstr "Статистиканы көре алады"
+
+#: delivery/models.py:161
+#, python-format
+msgid "Заказ №%(number)s"
+msgstr "№%(number)s тапсырыс"
+
+#: delivery/models.py:169
+msgid "Заказ на кухне"
+msgstr "Асханадағы тапсырыс"
+
+#: delivery/models.py:170
+msgid "Кухня"
+msgstr "Асхана"
+
+#: delivery/models.py:176
+msgid "Количество"
+msgstr "Саны"
+
+#: delivery/models.py:177
+msgid "Цена на момент заказа"
+msgstr "Тапсырыс кезіндегі баға"
+
+#: delivery/models.py:180
+msgid "Позиция заказа"
+msgstr "Тапсырыс позициясы"
+
+#: delivery/models.py:181
+msgid "Позиции заказа"
+msgstr "Тапсырыс позициялары"
+
+#: delivery/models.py:188
+msgid "Вопрос"
+msgstr "Сұрақ"
+
+#: delivery/models.py:189
+msgid "Ответ"
+msgstr "Жауап"
+
+#: delivery/models.py:193
+msgid "Частый вопрос"
+msgstr "Жиі қойылатын сұрақ"
+
+#: delivery/models.py:194
+msgid "Частые вопросы"
+msgstr "Жиі қойылатын сұрақтар"
+
+#: delivery/statistics.py:15
+msgid "7 дней"
+msgstr "7 күн"
+
+#: delivery/statistics.py:16
+msgid "30 дней"
+msgstr "30 күн"
+
+#: delivery/statistics.py:17
+msgid "Всё время"
+msgstr "Барлық уақыт"
+
+#: delivery/statistics.py:117
+#: delivery/templates/admin/delivery/order/change_list.html:6
+#: delivery/templates/admin/delivery/statistics.html:34
+msgid "Статистика"
+msgstr "Статистика"
+
+#: delivery/templates/admin/delivery/statistics.html:31
+msgid "Начало"
+msgstr "Басты бет"
+
+#: delivery/templates/admin/delivery/statistics.html:48
+msgid "Заказов"
+msgstr "Тапсырыстар"
+
+#: delivery/templates/admin/delivery/statistics.html:50
+#, python-format
+msgid "в работе: %(n)s"
+msgstr "жұмыста: %(n)s"
+
+#: delivery/templates/admin/delivery/statistics.html:53
+#: delivery/templates/admin/delivery/statistics.html:130
+msgid "Доставлено"
+msgstr "Жеткізілді"
+
+#: delivery/templates/admin/delivery/statistics.html:57
+msgid "Выручка"
+msgstr "Түсім"
+
+#: delivery/templates/admin/delivery/statistics.html:59
+msgid "по доставленным заказам"
+msgstr "жеткізілген тапсырыстар бойынша"
+
+#: delivery/templates/admin/delivery/statistics.html:62
+msgid "Средний чек"
+msgstr "Орташа чек"
+
+#: delivery/templates/admin/delivery/statistics.html:66
+msgid "Отменено"
+msgstr "Бас тартылды"
+
+#: delivery/templates/admin/delivery/statistics.html:68
+#, python-format
+msgid "%(n)s%% от всех"
+msgstr "барлығының %(n)s%%"
+
+#: delivery/templates/admin/delivery/statistics.html:73
+msgid "Заказы по дням"
+msgstr "Күндер бойынша тапсырыстар"
+
+#: delivery/templates/admin/delivery/statistics.html:82
+#, python-format
+msgid "максимум %(n)s в день"
+msgstr "күніне ең көбі %(n)s"
+
+#: delivery/templates/admin/delivery/statistics.html:86
+msgid "За этот период заказов не было."
+msgstr "Бұл кезеңде тапсырыстар болған жоқ."
+
+#: delivery/templates/admin/delivery/statistics.html:92
+msgid "По статусам"
+msgstr "Мәртебелер бойынша"
+
+#: delivery/templates/admin/delivery/statistics.html:107
+msgid "Популярные товары"
+msgstr "Танымал тауарлар"
+
+#: delivery/templates/admin/delivery/statistics.html:110
+msgid "Штук"
+msgstr "Дана"
+
+#: delivery/templates/admin/delivery/statistics.html:122
+msgid "Нет данных."
+msgstr "Деректер жоқ."
+
+#: delivery/templates/admin/delivery/statistics.html:130
+msgid "Сейчас везёт"
+msgstr "Қазір жеткізуде"
+
+#: delivery/templates/admin/delivery/statistics.html:134
+msgid "(неактивен)"
+msgstr "(белсенді емес)"
+
+#: delivery/templates/admin/delivery/statistics.html:142
+msgid "Курьеров пока нет."
+msgstr "Әзірге курьерлер жоқ."
+
+#: templates/admin/base_site.html:5
+msgid "Django site admin"
+msgstr ""
+
+#: templates/admin/base_site.html:8
+msgid "Django administration"
+msgstr ""
