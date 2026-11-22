@@ -18,6 +18,7 @@ from bot.keyboards.my_orders import (
     retry_list_keyboard,
 )
 from bot.services.delivery import delivery_line
+from bot.services.notifications import mark_known
 from bot.services.my_orders import (
     ORDERS_LIMIT,
     cancel_by_client,
@@ -25,6 +26,7 @@ from bot.services.my_orders import (
     get_order_for_client,
 )
 from bot.services.validation import format_money, format_phone
+from delivery.models import Order
 
 
 router = Router()
@@ -250,6 +252,9 @@ async def confirm_cancel(
         return
 
     if result == "cancelled":
+        # Клиент сам отменил и видит подтверждение: без дубля уведомлением
+        mark_known(order_id, Order.Status.CANCELLED)
+
         order = await get_order_for_client(callback.from_user.id, order_id)
         number = order["number"] if order else f"{order_id:06d}"
 
