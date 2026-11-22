@@ -1,0 +1,12 @@
+// Визитка Nurlight на Cloudflare (Workers со статическими файлами, бесплатный тариф).
+// Выложить:  npx wrangler@4 deploy -c deploy/landing.wrangler.jsonc
+{
+  "name": "nurlight-landing",
+  "compatibility_date": "2026-11-01",
+  "workers_dev": true,
+  "assets": {
+    "directory": "../landing"
+  },
+  // Визитка на основном адресе; админка и сайт-магазин — на nurlight-admin.moji.rest через туннель
+  "routes": [{ "pattern": "nurlight.moji.rest", "custom_domain": true }]
+}
