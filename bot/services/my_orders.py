@@ -1,5 +1,7 @@
 from django.utils import timezone
 
+from bot.services.validation import format_money
+from delivery import payments
 from delivery.models import Order
 
 ORDERS_LIMIT = 10
@@ -82,19 +84,67 @@ async def get_order_for_client(
         "address": order.address,
         "phone": order.client.phone,
         "comment": order.comment,
+        # Оплата: товары и доставка оплачиваются отдельными счетами
+        "paid": order.payment_status == Order.PaymentStatus.PAID,
+        "delivery_price": order.delivery_price,
+        "delivery_paid": order.delivery_paid_at is not None,
+        "delivery_due": payments.delivery_due(order),
     }
+
+
+async def get_orders_context(telegram_id: int, limit: int = 3) -> str:
+    """Текст о последних заказах клиента для AI-консультанта.
+
+    Только заказы этого клиента. Адрес и телефон не передаются:
+    для ответа «где мой заказ» они не нужны.
+    """
+
+    now = timezone.localtime()
+    lines = [f"Сейчас: {now:%d.%m.%Y, %H:%M} (время Алматы)."]
+
+    orders = (
+        Order.objects
+        .filter(client__telegram_id=telegram_id)
+        .order_by("-created_at", "-id")[:limit]
+    )
+
+    found = False
+
+    async for order in orders:
+        found = True
+
+        items = ", ".join([
+            f"{item.product.name} × {item.quantity}"
+            async for item in order.items.select_related("product")
+        ])
+
+        created = timezone.localtime(order.created_at)
+
+        lines.append(
+            f"№{order.number} — статус: {order.get_status_display()} — "
+            f"сумма: {format_money(order.total)} — "
+            f"создан: {created:%d.%m.%Y, %H:%M} — состав: {items or '—'}"
+        )
+
+    if not found:
+        lines.append("У клиента пока нет заказов.")
+
+    return "\n".join(lines)
 
 
 async def cancel_by_client(telegram_id: int, order_id: int) -> str:
     """Отмена одним условным обновлением, без «прочитать → проверить → записать».
 
-    Возвращает: "cancelled", "already_cancelled", "too_late" или "not_found".
+    Возвращает: "cancelled", "already_cancelled", "paid", "too_late"
+    или "not_found". Оплаченный заказ клиент не отменяет: возврат денег
+    решает оператор.
     """
 
     updated = await Order.objects.filter(
         pk=order_id,
         client__telegram_id=telegram_id,
         status=Order.Status.NEW,
+        payment_status=Order.PaymentStatus.UNPAID,
     ).aupdate(
         status=Order.Status.CANCELLED,
         updated_at=timezone.now(),
@@ -104,17 +154,22 @@ async def cancel_by_client(telegram_id: int, order_id: int) -> str:
         return "cancelled"
 
     # Не обновили: выясняем почему (заказ чужой, уже отменён или уже принят)
-    status = await (
+    row = await (
         Order.objects
         .filter(pk=order_id, client__telegram_id=telegram_id)
-        .values_list("status", flat=True)
+        .values_list("status", "payment_status")
         .afirst()
     )
 
-    if status is None:
+    if row is None:
         return "not_found"
+
+    status, payment_status = row
 
     if status == Order.Status.CANCELLED:
         return "already_cancelled"
+
+    if payment_status == Order.PaymentStatus.PAID:
+        return "paid"
 
     return "too_late"

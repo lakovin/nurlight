@@ -8,12 +8,14 @@ from aiogram.types import Message
 
 from bot.keyboards.main_menu import (
     AI_BUTTON,
+    AI_BUTTON_LEGACY,
     main_menu,
 )
 from bot.services.ai_agent import (
     MAX_HISTORY_MESSAGES,
     ask_ai,
 )
+from bot.services.my_orders import get_orders_context
 
 
 router = Router()
@@ -23,7 +25,7 @@ logger = logging.getLogger(__name__)
 # ---------- Запуск AI-помощника ----------
 
 @router.message(Command("ai"))
-@router.message(F.text == AI_BUTTON)
+@router.message(F.text.in_({AI_BUTTON, AI_BUTTON_LEGACY}))
 async def start_ai(
     message: Message,
     state: FSMContext,
@@ -36,9 +38,9 @@ async def start_ai(
     )
 
     await message.answer(
-        "🤖 <b>AI-помощник Nurlight</b>\n\n"
-        "Привет! 👋 Я помогу выбрать товары, "
-        "подскажу цены и отвечу на вопросы.\n\n"
+        "💬 <b>Виртуальный оператор Nurlight</b>\n\n"
+        "Привет! 👋 Я бот-помощник: подскажу по меню и ценам, "
+        "доставке и вашим заказам.\n\n"
         "Просто напиши, что тебя интересует!\n\n"
         "🧹 /clear — начать новый разговор\n"
         "❌ /exit — завершить диалог"
@@ -111,10 +113,21 @@ async def ai_chat(
     )
 
     try:
+        # Заказы этого клиента, чтобы AI мог ответить «где мой заказ?».
+        # Если не получилось загрузить — AI ответит без них.
+        try:
+            orders_context = await get_orders_context(
+                message.from_user.id
+            )
+        except Exception:
+            logger.exception("Не удалось загрузить заказы для AI")
+            orders_context = None
+
         # Запрос к Gemini с памятью диалога
         answer, success = await ask_ai(
             question=message.text,
             history=history,
+            client_context=orders_context,
         )
 
         # Сохраняем только успешные ответы

@@ -17,8 +17,13 @@ from bot.keyboards.my_orders import (
     orders_list_keyboard,
     retry_list_keyboard,
 )
-from bot.services.delivery import delivery_line
+from bot.services.delivery import order_delivery_line
 from bot.services.notifications import mark_known
+from bot.services.payment import (
+    available as payment_enabled,
+    send_delivery_invoice,
+    send_order_invoice,
+)
 from bot.services.my_orders import (
     ORDERS_LIMIT,
     cancel_by_client,
@@ -37,6 +42,10 @@ LOAD_ERROR_TEXT = "Не удалось загрузить заказы. Попр
 NOT_FOUND_TEXT = "Заказ не найден."
 TOO_LATE_TEXT = (
     "Заказ уже принят оператором — отменить его нельзя.\n"
+    "Свяжитесь с оператором, он поможет."
+)
+PAID_TEXT = (
+    "Заказ уже оплачен. Отмену и возврат денег оформит оператор.\n"
     "Свяжитесь с оператором, он поможет."
 )
 
@@ -83,8 +92,17 @@ def format_order_card(order: dict) -> str:
     lines.extend([
         "",
         f"Товары: {format_money(order['total'])}",
-        delivery_line(order["total"]),
+        order_delivery_line(
+            order["total"],
+            order["delivery_price"],
+            order["delivery_paid"],
+        ),
         f"<b>Итого: {format_money(order['total'])}</b>",
+        *(
+            [f"Оплата: {'✅ оплачен' if order['paid'] else 'не оплачен'}"]
+            if order["paid"] or payment_enabled()
+            else []
+        ),
         "",
         f"Адрес: {html.escape(order['address'])}",
         f"Телефон: {html.escape(phone)}",
@@ -193,6 +211,59 @@ async def refresh_order(
     await callback.answer("Статус обновлён")
 
 
+# ---------- Оплата ----------
+
+@router.callback_query(
+    MyOrdersCallback.filter(F.action.in_({"pay", "pay_delivery"}))
+)
+async def pay_order(
+    callback: CallbackQuery,
+    callback_data: MyOrdersCallback,
+):
+    """Выставляет счёт: за товары или отдельно за доставку."""
+
+    order = await load_card(callback, callback_data.order_id)
+
+    if order is None:
+        return
+
+    try:
+        if callback_data.action == "pay_delivery":
+            sent = order["delivery_due"] and await send_delivery_invoice(
+                callback.message,
+                order["id"],
+                order["number"],
+                order["delivery_price"],
+            )
+        else:
+            sent = (
+                not order["paid"]
+                and order["status"] != "cancelled"
+                and await send_order_invoice(
+                    callback.message,
+                    order["id"],
+                    order["number"],
+                    order["total"],
+                )
+            )
+    except Exception:
+        logger.exception("Не удалось выставить счёт по заказу %s", order["id"])
+        await callback.answer(
+            "Не удалось выставить счёт. Попробуйте позже.",
+            show_alert=True,
+        )
+        return
+
+    if not sent:
+        await callback.answer(
+            "Оплата для этого заказа сейчас недоступна.",
+            show_alert=True,
+        )
+        return
+
+    await callback.answer()
+
+
 # ---------- Отмена ----------
 
 @router.callback_query(MyOrdersCallback.filter(F.action == "cancel"))
@@ -205,9 +276,9 @@ async def ask_cancel(
     if order is None:
         return
 
-    if order["status"] != "new":
+    if order["paid"] or order["status"] != "new":
         await callback.message.edit_text(
-            TOO_LATE_TEXT,
+            PAID_TEXT if order["paid"] else TOO_LATE_TEXT,
             reply_markup=back_to_order_keyboard(order["id"]),
         )
         await callback.answer()
@@ -270,9 +341,9 @@ async def confirm_cancel(
         await callback.answer("Заказ уже отменён.", show_alert=True)
         return
 
-    if result == "too_late":
+    if result in ("too_late", "paid"):
         await callback.message.edit_text(
-            TOO_LATE_TEXT,
+            PAID_TEXT if result == "paid" else TOO_LATE_TEXT,
             reply_markup=back_to_order_keyboard(order_id),
         )
         await callback.answer()
