@@ -32,7 +32,8 @@ class OrderAdmin(admin.ModelAdmin):
     search_fields = ("id", "address", "client__name", "client__phone")
     autocomplete_fields = ("client",)
     # Оплату отмечает только бот после платежа (delivery/payments.py), руками не меняется
-    readonly_fields = ("created_at", "updated_at", "payment_status", "paid_at", "telegram_charge_id", "provider_charge_id")
+    readonly_fields = ("created_at", "updated_at", "payment_status", "paid_at", "telegram_charge_id", "provider_charge_id",
+                       "delivery_paid_at", "delivery_telegram_charge_id", "delivery_provider_charge_id")
     date_hierarchy = "created_at"
     inlines = [OrderItemInline]
     actions = ["accept_orders", "cancel_orders"]

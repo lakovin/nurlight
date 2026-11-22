@@ -1,3 +1,6 @@
+from decimal import Decimal
+
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -106,6 +109,14 @@ class Order(models.Model):
     # Номера платежа: по ним операция находится в Telegram и в кабинете Stripe (для возврата)
     telegram_charge_id = models.CharField("Платёж в Telegram", max_length=255, blank=True, default="", db_default="")
     provider_charge_id = models.CharField("Платёж в Stripe", max_length=255, blank=True, default="", db_default="")
+    # Доставка оплачивается отдельным счётом в боте: цену называет оператор (бесплатно от 5 000 ₸)
+    delivery_price = models.DecimalField(
+        "Стоимость доставки", max_digits=10, decimal_places=2, null=True, blank=True,
+        help_text="Заполняет оператор. Пусто — ещё не назначена, 0 — бесплатно. После этого клиент оплатит её в боте.",
+    )
+    delivery_paid_at = models.DateTimeField("Доставка оплачена", null=True, blank=True)
+    delivery_telegram_charge_id = models.CharField("Платёж за доставку в Telegram", max_length=255, blank=True, default="", db_default="")
+    delivery_provider_charge_id = models.CharField("Платёж за доставку в Stripe", max_length=255, blank=True, default="", db_default="")
     created_at = models.DateTimeField("Создан", auto_now_add=True)
     updated_at = models.DateTimeField("Обновлён", auto_now=True)
 
@@ -122,6 +133,16 @@ class Order(models.Model):
     def number(self):
         # Номер заказа для клиента — тот же id, но в читаемом виде
         return f"{self.pk:06d}"
+
+    # Меньше этой суммы Telegram не примет платёж (core.telegram.org/bots/payments/currencies.json, KZT)
+    MIN_INVOICE = Decimal("518")
+
+    def clean(self):
+        if self.delivery_price is not None and 0 < self.delivery_price < self.MIN_INVOICE:
+            raise ValidationError({
+                "delivery_price": f"Telegram не принимает платёж меньше {self.MIN_INVOICE:.0f} ₸: "
+                                  "укажите 0 (бесплатно) или от 518 ₸.",
+            })
 
     def recalculate_total(self):
         self.total = sum((item.price * item.quantity for item in self.items.all()), start=0)
