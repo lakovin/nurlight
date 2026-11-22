@@ -126,9 +126,6 @@ a { color: inherit; }
 .typing b { width: 6px; height: 6px; border-radius: 50%; background: #B7C2CA; }
 @keyframes in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
-.replay { margin-top: 16px; display: flex; justify-content: center; }
-.replay button { font: inherit; font-size: 15px; color: var(--muted); background: none; border: 0; cursor: pointer; padding: 8px 12px; border-radius: 8px; }
-.replay button:hover { color: var(--text); background: rgba(255,255,255,.6); }
 
 
 /* ---------- Секции ---------- */
