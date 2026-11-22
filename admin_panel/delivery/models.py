@@ -67,7 +67,14 @@ class Courier(models.Model):
         return self.name
 
 
+class PaymentStatus(models.TextChoices):
+    UNPAID = "unpaid", "Не оплачен"
+    PAID = "paid", "Оплачен"
+
+
 class Order(models.Model):
+    PaymentStatus = PaymentStatus
+
     class Status(models.TextChoices):
         NEW = "new", "Новый"
         ACCEPTED = "accepted", "Принят"
@@ -89,6 +96,16 @@ class Order(models.Model):
     address = models.CharField("Адрес", max_length=500)
     total = models.DecimalField("Сумма", max_digits=10, decimal_places=2, default=0)
     comment = models.TextField("Комментарий", blank=True)
+    # Оплата во встроенных платежах Telegram (провайдер Stripe), логика — delivery/payments.py.
+    # db_default — чтобы бот со старым кодом (без этих полей) мог создавать заказы в общей базе
+    payment_status = models.CharField(
+        "Оплата", max_length=16, choices=PaymentStatus.choices,
+        default=PaymentStatus.UNPAID, db_default=PaymentStatus.UNPAID,
+    )
+    paid_at = models.DateTimeField("Оплачен", null=True, blank=True)
+    # Номера платежа: по ним операция находится в Telegram и в кабинете Stripe (для возврата)
+    telegram_charge_id = models.CharField("Платёж в Telegram", max_length=255, blank=True, default="", db_default="")
+    provider_charge_id = models.CharField("Платёж в Stripe", max_length=255, blank=True, default="", db_default="")
     created_at = models.DateTimeField("Создан", auto_now_add=True)
     updated_at = models.DateTimeField("Обновлён", auto_now=True)
 

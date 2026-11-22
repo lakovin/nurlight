@@ -24,14 +24,15 @@ class OrderItemInline(admin.TabularInline):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ("number", "created_at", "client", "address", "total", "status_badge", "status", "courier")
+    list_display = ("number", "created_at", "client", "address", "total", "payment_status", "status_badge", "status", "courier")
     list_display_links = ("number",)
-    list_filter = ("status", "courier", "created_at")
+    list_filter = ("status", "payment_status", "courier", "created_at")
     list_editable = ("status", "courier")
     list_select_related = ("client", "courier")
     search_fields = ("id", "address", "client__name", "client__phone")
     autocomplete_fields = ("client",)
-    readonly_fields = ("created_at", "updated_at")
+    # Оплату отмечает только бот после платежа (delivery/payments.py), руками не меняется
+    readonly_fields = ("created_at", "updated_at", "payment_status", "paid_at", "telegram_charge_id", "provider_charge_id")
     date_hierarchy = "created_at"
     inlines = [OrderItemInline]
     actions = ["accept_orders", "cancel_orders"]
