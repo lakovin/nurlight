@@ -4,6 +4,7 @@ from django.contrib.auth.models import Group, User
 from django.test import TestCase
 from django.urls import reverse
 
+from . import payments
 from .models import Category, Client, Courier, Order, OrderItem, Product
 from .roles import MANAGER, OPERATOR
 from .statistics import collect_statistics
@@ -167,3 +168,57 @@ class OrderAdminTests(DeliveryTestCase):
         in_transit.refresh_from_db()
         self.assertEqual(delivered.status, Order.Status.DELIVERED)
         self.assertEqual(in_transit.status, Order.Status.CANCELLED)
+
+
+class PaymentTests(DeliveryTestCase):
+    """Оплата в Telegram: проверка перед списанием и отметка об оплате (delivery/payments.py)."""
+
+    def pay(self, order, telegram_id=1, total=None, currency="KZT", charge="tg_1"):
+        total = payments.amount(order.total) if total is None else total
+        return payments.mark_paid(payments.invoice_payload(order), telegram_id, total, currency, charge, "ch_1")
+
+    def test_amount_in_tiyn(self):
+        self.assertEqual(payments.amount(Decimal("2900.00")), 290000)
+
+    def test_check_allows_correct_payment(self):
+        order = self.make_order(quantity=2)
+        self.assertIsNone(payments.check_before_payment(payments.invoice_payload(order), 1, 580000, "KZT"))
+
+    def test_check_rejects_wrong_amount_foreign_cancelled(self):
+        order = self.make_order()
+        payload = payments.invoice_payload(order)
+        self.assertIn("Сумма", payments.check_before_payment(payload, 1, 100, "KZT"))
+        self.assertIn("не найден", payments.check_before_payment(payload, 999, 290000, "KZT"))
+        self.assertIn("не найден", payments.check_before_payment("order:abc", 1, 290000, "KZT"))
+        cancelled = self.make_order(status=Order.Status.CANCELLED)
+        self.assertIn("отменён", payments.check_before_payment(payments.invoice_payload(cancelled), 1, 290000, "KZT"))
+
+    def test_mark_paid_once(self):
+        order = self.make_order()
+        self.assertTrue(self.pay(order))
+        order.refresh_from_db()
+        self.assertEqual(order.payment_status, Order.PaymentStatus.PAID)
+        self.assertEqual(order.telegram_charge_id, "tg_1")
+        self.assertFalse(self.pay(order, charge="tg_2"))  # повторное сообщение о платеже
+        order.refresh_from_db()
+        self.assertEqual(order.telegram_charge_id, "tg_1")
+        self.assertIn("уже оплачен", payments.check_before_payment(payments.invoice_payload(order), 1, 290000, "KZT"))
+
+    def test_foreign_client_cannot_mark_paid(self):
+        order = self.make_order()
+        self.assertFalse(self.pay(order, telegram_id=999))
+        order.refresh_from_db()
+        self.assertEqual(order.payment_status, Order.PaymentStatus.UNPAID)
+
+    def test_old_code_insert_gets_unpaid_default(self):
+        # Бот со старым кодом не знает новых колонок — база сама ставит «не оплачен»
+        from django.db import connection
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO delivery_order (client_id, status, address, total, comment, created_at, updated_at)"
+                " VALUES (%s, 'new', 'старый бот', 0, '', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+                [self.client_obj.pk],
+            )
+        order = Order.objects.get(address="старый бот")
+        self.assertEqual(order.payment_status, Order.PaymentStatus.UNPAID)
+        self.assertEqual(order.telegram_charge_id, "")
