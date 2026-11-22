@@ -1,7 +1,19 @@
-# Запуск на nurlight.moji.rest
+# Запуск: визитка и панель
+
+| Адрес | Что | Где работает |
+|---|---|---|
+| https://nurlight.moji.rest | визитка (папка `landing/`) | Cloudflare Workers, бесплатно, не зависит от Mac |
+| https://nurlight-admin.moji.rest/admin/ | панель операторов (и старый сайт-магазин на `/`) | Mac Нурдаулета через Cloudflare Tunnel |
+
+Визитка выкладывается одной командой (нужен вход в Cloudflare: `npx wrangler@4 login`):
+
+```bash
+npx wrangler@4 deploy -c deploy/landing.wrangler.jsonc
+```
 
 Панель и бот работают на Mac Нурдаулета, а снаружи открываются через Cloudflare Tunnel
-по адресу https://nurlight.moji.rest. Порты на роутере не открываются, HTTPS даёт Cloudflare.
+по адресу https://nurlight-admin.moji.rest (не `admin.nurlight…`: бесплатный сертификат
+Cloudflare покрывает только один уровень поддоменов). Порты на роутере не открываются, HTTPS даёт Cloudflare.
 Сайт поднимается сам при входе в macOS и перезапускается при падении; недоступен, только пока
 Mac выключен или спит.
 
@@ -28,7 +40,7 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 brew install cloudflared
 cloudflared tunnel login                               # в браузере выбрать moji.rest
 cloudflared tunnel create nurlight
-cloudflared tunnel route dns nurlight nurlight.moji.rest
+cloudflared tunnel route dns nurlight nurlight-admin.moji.rest
 cp deploy/public.env.example deploy/public.env         # заполнить: ключ, BOT_TOKEN
 ```
 
