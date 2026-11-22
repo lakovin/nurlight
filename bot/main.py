@@ -18,6 +18,7 @@ from bot.handlers import (  # noqa: E402
     faq,
     my_orders,
     order,
+    payment,
     start,
 )
 from bot.services import notifications  # noqa: E402
@@ -50,6 +51,7 @@ async def main():
         start.router,
         catalog.router,
         cart.router,
+        payment.router,
         ai_agent.router,
     )
 

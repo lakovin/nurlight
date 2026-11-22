@@ -9,6 +9,24 @@ from bot.services.validation import format_money
 FREE_DELIVERY_FROM = Decimal("5000")
 
 
+def order_delivery_line(
+    total: Decimal,
+    delivery_price: Decimal | None,
+    delivery_paid: bool,
+) -> str:
+    """Строка про доставку в карточке заказа с учётом цены оператора."""
+
+    if delivery_price is None:
+        # Оператор ещё не назначил цену: действует правило порога
+        return delivery_line(total)
+
+    if delivery_price == 0:
+        return "Доставка: бесплатно"
+
+    state = "оплачена" if delivery_paid else "ожидает оплаты"
+    return f"Доставка: {format_money(delivery_price)} ({state})"
+
+
 def delivery_line(total: Decimal | int | float) -> str:
     """Строка про доставку для сводки и карточки заказа."""
 

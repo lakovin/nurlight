@@ -10,6 +10,7 @@ from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
 from bot.keyboards.cart import CartCallback
 from bot.keyboards.main_menu import (
     AI_BUTTON,
+    AI_BUTTON_LEGACY,
     CART_BUTTON,
     CATALOG_BUTTON,
     FAQ_BUTTON,
@@ -31,6 +32,10 @@ from bot.keyboards.order import (
 )
 from bot.services.clients import get_or_register_client
 from bot.services.delivery import delivery_line
+from bot.services.payment import (
+    available as payment_available,
+    send_order_invoice,
+)
 from bot.services.orders import (
     create_order,
     get_client_phone,
@@ -73,6 +78,7 @@ MENU_BUTTONS = {
     MY_ORDERS_BUTTON,
     FAQ_BUTTON,
     AI_BUTTON,
+    AI_BUTTON_LEGACY,
 }
 
 
@@ -711,6 +717,30 @@ async def confirm_order(
             logger.exception(
                 "Заказ сохранён, но не удалось "
                 "отправить подтверждение"
+            )
+
+        # Счёт за товары. Если не получилось — заказ всё равно создан,
+        # оплатить можно позже в «Моих заказах»
+        try:
+            if await send_order_invoice(
+                callback.message,
+                order.pk,
+                order.number,
+                order.total,
+            ):
+                await callback.message.answer(
+                    "💳 Оплатить заказ можно счётом выше или позже "
+                    "в разделе «Мои заказы»."
+                )
+            elif not payment_available():
+                # Заглушка: оплата в боте ещё не подключена
+                await callback.message.answer(
+                    "💳 Онлайн-оплата скоро появится. "
+                    "Способ оплаты уточнит оператор."
+                )
+        except Exception:
+            logger.exception(
+                "Заказ %s создан, но счёт не выставлен", order.pk
             )
 
 
