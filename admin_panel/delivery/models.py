@@ -8,6 +8,7 @@ from django.utils.translation import gettext_lazy as _
 class Language(models.TextChoices):
     RU = "ru", _("Русский")
     KK = "kk", _("Қазақша")
+    EN = "en", "English"
 
 
 class Client(models.Model):

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-22 23:06+0500\n"
+"POT-Creation-Date: 2026-11-23 18:39+0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -59,7 +59,7 @@ msgstr "Accept selected orders"
 msgid "Отменить выбранные заказы"
 msgstr "Cancel selected orders"
 
-#: delivery/admin.py:134 delivery/models.py:103
+#: delivery/admin.py:134 delivery/models.py:113
 msgid "Статус"
 msgstr "Status"
 
@@ -79,7 +79,11 @@ msgstr "Pack"
 msgid "Готово"
 msgstr "Done"
 
-#: delivery/apps.py:9 delivery/models.py:121
+#: delivery/admin.py:212 delivery/admin.py:225
+msgid "Переводы для бота"
+msgstr "Translations for the bot"
+
+#: delivery/apps.py:9 delivery/models.py:131
 #: delivery/templates/admin/delivery/statistics.html:32
 msgid "Доставка"
 msgstr "Delivery"
@@ -92,218 +96,234 @@ msgstr "Русский"
 msgid "Қазақша"
 msgstr "Қазақша"
 
-#: delivery/models.py:16 delivery/models.py:61
+#: delivery/models.py:17 delivery/models.py:71
 msgid "Имя"
 msgstr "Name"
 
-#: delivery/models.py:17 delivery/models.py:62
+#: delivery/models.py:18 delivery/models.py:72
 msgid "Телефон"
 msgstr "Phone"
 
-#: delivery/models.py:18 delivery/models.py:190
+#: delivery/models.py:19 delivery/models.py:200
 msgid "Язык"
 msgstr "Language"
 
-#: delivery/models.py:19
+#: delivery/models.py:20
 msgid "Дата регистрации"
 msgstr "Registered"
 
-#: delivery/models.py:22 delivery/models.py:94
+#: delivery/models.py:23 delivery/models.py:104
 msgid "Клиент"
 msgstr "Customer"
 
-#: delivery/models.py:23
+#: delivery/models.py:24
 msgid "Клиенты"
 msgstr "Customers"
 
-#: delivery/models.py:30 delivery/models.py:43
+#: delivery/models.py:31 delivery/models.py:48
 msgid "Название"
 msgstr "Title"
 
-#: delivery/models.py:31
+#: delivery/models.py:34 delivery/models.py:51
+msgid "Название (қазақша)"
+msgstr "Name (Kazakh)"
+
+#: delivery/models.py:35 delivery/models.py:52
+msgid "Название (English)"
+msgstr "Name (English)"
+
+#: delivery/models.py:36
 msgid "Порядок"
 msgstr "Order"
 
-#: delivery/models.py:34 delivery/models.py:47
+#: delivery/models.py:39 delivery/models.py:57
 msgid "Категория"
 msgstr "Category"
 
-#: delivery/models.py:35
+#: delivery/models.py:40
 msgid "Категории"
 msgstr "Categories"
 
-#: delivery/models.py:44
+#: delivery/models.py:49
 msgid "Описание"
 msgstr "Description"
 
-#: delivery/models.py:45
+#: delivery/models.py:53
+msgid "Описание (қазақша)"
+msgstr "Description (Kazakh)"
+
+#: delivery/models.py:54
+msgid "Описание (English)"
+msgstr "Description (English)"
+
+#: delivery/models.py:55
 msgid "Цена"
 msgstr "Price"
 
-#: delivery/models.py:49
+#: delivery/models.py:59
 msgid "Доступен"
 msgstr "Available"
 
-#: delivery/models.py:52 delivery/models.py:175
+#: delivery/models.py:62 delivery/models.py:185
 #: delivery/templates/admin/delivery/statistics.html:110
 msgid "Товар"
 msgstr "Product"
 
-#: delivery/models.py:53
+#: delivery/models.py:63
 msgid "Товары"
 msgstr "Products"
 
-#: delivery/models.py:64
+#: delivery/models.py:74
 msgid "Активен"
 msgstr "Active"
 
-#: delivery/models.py:67 delivery/models.py:101
+#: delivery/models.py:77 delivery/models.py:111
 #: delivery/templates/admin/delivery/statistics.html:130
 msgid "Курьер"
 msgstr "Courier"
 
-#: delivery/models.py:68 delivery/templates/admin/delivery/statistics.html:127
+#: delivery/models.py:78 delivery/templates/admin/delivery/statistics.html:127
 msgid "Курьеры"
 msgstr "Couriers"
 
-#: delivery/models.py:75
+#: delivery/models.py:85
 msgid "Не оплачен"
 msgstr "Unpaid"
 
-#: delivery/models.py:76 delivery/models.py:116
+#: delivery/models.py:86 delivery/models.py:126
 msgid "Оплачен"
 msgstr "Paid"
 
-#: delivery/models.py:83
+#: delivery/models.py:93
 msgid "Новый"
 msgstr "New"
 
-#: delivery/models.py:84
+#: delivery/models.py:94
 msgid "Принят"
 msgstr "Accepted"
 
-#: delivery/models.py:86
+#: delivery/models.py:96
 msgid "Готовится"
 msgstr "Cooking"
 
-#: delivery/models.py:87
+#: delivery/models.py:97
 msgid "Упаковывается"
 msgstr "Packing"
 
-#: delivery/models.py:88
+#: delivery/models.py:98
 msgid "Готов"
 msgstr "Ready"
 
-#: delivery/models.py:89
+#: delivery/models.py:99
 msgid "Передан курьеру"
 msgstr "Handed to courier"
 
-#: delivery/models.py:90
+#: delivery/models.py:100
 msgid "В пути"
 msgstr "On the way"
 
-#: delivery/models.py:91
+#: delivery/models.py:101
 msgid "Доставлен"
 msgstr "Delivered"
 
-#: delivery/models.py:92
+#: delivery/models.py:102
 msgid "Отменён"
 msgstr "Cancelled"
 
-#: delivery/models.py:105
+#: delivery/models.py:115
 msgid "Адрес"
 msgstr "Address"
 
-#: delivery/models.py:106
+#: delivery/models.py:116
 msgid "Широта"
 msgstr "Latitude"
 
-#: delivery/models.py:107
+#: delivery/models.py:117
 msgid "Долгота"
 msgstr "Longitude"
 
-#: delivery/models.py:108 delivery/templates/admin/delivery/statistics.html:110
+#: delivery/models.py:118 delivery/templates/admin/delivery/statistics.html:110
 msgid "Сумма"
 msgstr "Total"
 
-#: delivery/models.py:109
+#: delivery/models.py:119
 msgid "Комментарий"
 msgstr "Comment"
 
-#: delivery/models.py:113
+#: delivery/models.py:123
 msgid "Оплата"
 msgstr "Payment"
 
-#: delivery/models.py:118
+#: delivery/models.py:128
 msgid "Платёж в Telegram"
 msgstr "Telegram payment"
 
-#: delivery/models.py:119
+#: delivery/models.py:129
 msgid "Платёж в Stripe"
 msgstr "Stripe payment"
 
-#: delivery/models.py:122
+#: delivery/models.py:132
 msgid "Создан"
 msgstr "Created"
 
-#: delivery/models.py:123
+#: delivery/models.py:133
 msgid "Обновлён"
 msgstr "Updated"
 
-#: delivery/models.py:126 delivery/models.py:174
+#: delivery/models.py:136 delivery/models.py:184
 msgid "Заказ"
 msgstr "Order"
 
-#: delivery/models.py:127 delivery/templates/admin/delivery/statistics.html:33
+#: delivery/models.py:137 delivery/templates/admin/delivery/statistics.html:33
 msgid "Заказы"
 msgstr "Orders"
 
-#: delivery/models.py:129
+#: delivery/models.py:139
 msgid "Может смотреть статистику"
 msgstr "Can view statistics"
 
-#: delivery/models.py:161
+#: delivery/models.py:171
 #, python-format
 msgid "Заказ №%(number)s"
 msgstr "Order #%(number)s"
 
-#: delivery/models.py:169
+#: delivery/models.py:179
 msgid "Заказ на кухне"
 msgstr "Kitchen order"
 
-#: delivery/models.py:170
+#: delivery/models.py:180
 msgid "Кухня"
 msgstr "Kitchen"
 
-#: delivery/models.py:176
+#: delivery/models.py:186
 msgid "Количество"
 msgstr "Quantity"
 
-#: delivery/models.py:177
+#: delivery/models.py:187
 msgid "Цена на момент заказа"
 msgstr "Price at order time"
 
-#: delivery/models.py:180
+#: delivery/models.py:190
 msgid "Позиция заказа"
 msgstr "Order item"
 
-#: delivery/models.py:181
+#: delivery/models.py:191
 msgid "Позиции заказа"
 msgstr "Order items"
 
-#: delivery/models.py:188
+#: delivery/models.py:198
 msgid "Вопрос"
 msgstr "Question"
 
-#: delivery/models.py:189
+#: delivery/models.py:199
 msgid "Ответ"
 msgstr "Answer"
 
-#: delivery/models.py:193
+#: delivery/models.py:203
 msgid "Частый вопрос"
 msgstr "FAQ entry"
 
-#: delivery/models.py:194
+#: delivery/models.py:204
 msgid "Частые вопросы"
 msgstr "FAQ"
 
