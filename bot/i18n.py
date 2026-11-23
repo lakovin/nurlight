@@ -216,9 +216,9 @@ TEXTS: dict[str, dict[str, str]] = {
         "Please send your location with the “📍 Send location” button.",
     ),
     "step_note": _(
-        "🏠 <b>Шаг 2. Уточнение адреса</b>\n\nУкажите подъезд, этаж, квартиру или домофон либо нажмите «Пропустить».",
-        "🏠 <b>2-қадам. Мекенжайды нақтылау</b>\n\nКіреберіс, қабат, пәтер немесе домофонды көрсетіңіз не «Өткізіп жіберу» түймесін басыңыз.",
-        "🏠 <b>Step 2. Address details</b>\n\nEnter the entrance, floor, apartment or intercom code, or tap “Skip”.",
+        "🏠 <b>Шаг 2. Уточнение адреса</b>\n\nУкажите подъезд, этаж, квартиру или домофон либо нажмите «Пропустить».\nНапример: подъезд 2, этаж 5, кв. 42",
+        "🏠 <b>2-қадам. Мекенжайды нақтылау</b>\n\nКіреберіс, қабат, пәтер немесе домофонды көрсетіңіз не «Өткізіп жіберу» түймесін басыңыз.\nМысалы: 2-кіреберіс, 5-қабат, 42-пәтер",
+        "🏠 <b>Step 2. Address details</b>\n\nEnter the entrance, floor, apartment or intercom code, or tap “Skip”.\nFor example: entrance 2, floor 5, apt 42",
     ),
     "need_note_text": _(
         "Напишите уточнение текстом или нажмите «Пропустить».",
