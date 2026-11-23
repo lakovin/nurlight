@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Nurlight — доставка пиццы через Telegram</title>
-  <meta name="description" content="Пицца и напитки с доставкой по городу. Заказ и статус заказа — в Telegram-боте Nurlight.">
+  <title>Nurlight — Telegram-бот для заказов в вашем ресторане</title>
+  <meta name="description" content="Свой Telegram-бот для заказов и панель для оператора и кухни — под брендом ресторана. Подписка без комиссии с заказов.">
   <meta name="theme-color" content="#FFF8EF">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='46' fill='%23F28C28'/%3E%3Ccircle cx='50' cy='50' r='34' fill='%23F7D36B'/%3E%3Ccircle cx='38' cy='40' r='7' fill='%23B3311F'/%3E%3Ccircle cx='60' cy='58' r='7' fill='%23B3311F'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,9 +13,14 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <!-- Визитка Nurlight для бизнеса: ресторанам и кафе. Демо-бот — @nurlight_delivery_bot, связь — @bakaguy -->
   <header class="top">
     <a class="logo" href="#"><span class="logo-dot"></span>Nurlight</a>
-    <!-- Ссылка на бота — во всех кнопках data-bot -->
+    <nav class="top-nav" aria-label="Разделы">
+      <a href="#product" data-i18n="nav_product">Что получает ресторан</a>
+      <a href="#flow" data-i18n="nav_flow">Как идёт заказ</a>
+      <a href="#start" data-i18n="nav_start">Подключение</a>
+    </nav>
     <div class="top-right">
       <!-- Язык страницы: тексты в app.js (I18N), выбор запоминается в браузере -->
       <div class="lang" role="group" aria-label="Язык / Тіл / Language">
@@ -23,28 +28,32 @@
         <button type="button" data-lang="kk" aria-pressed="false">KZ</button>
         <button type="button" data-lang="en" aria-pressed="false">EN</button>
       </div>
-      <a class="btn btn-quiet" data-bot data-i18n="open_bot" href="https://t.me/nurlight_delivery_bot">Открыть бота</a>
+      <a class="btn btn-quiet" data-i18n="contact" href="https://t.me/bakaguy">Написать нам</a>
     </div>
   </header>
 
-  <!-- Первый экран: текст и шаги слева, телефон с чатом бота справа — показывает, как проходит заказ -->
+  <!-- Первый экран: предложение ресторану слева, справа — как заказывают его клиенты (чат бота) -->
   <section class="hero">
     <div>
-      <p class="eyebrow" data-i18n="eyebrow">Доставка по городу</p>
-      <h1 data-i18n-html="h1">Пицца с доставкой — заказ через <span class="nw">Telegram-бот</span></h1>
-      <p class="lead" data-i18n="lead">Меню, корзина и статус заказа — в одном чате. Приложение и регистрация не нужны.</p>
+      <p class="eyebrow" data-i18n="eyebrow">Для ресторанов и кафе</p>
+      <h1 data-i18n-html="h1">Свой <span class="nw">Telegram-бот</span> для заказов — под брендом вашего ресторана</h1>
+      <p class="lead" data-i18n="lead">Клиенты заказывают и платят в боте, оператор и кухня ведут заказ в панели. Подписка без комиссии с заказов.</p>
 
+      <p class="steps-title" data-i18n="steps_title">Так заказывает ваш клиент:</p>
       <ol class="steps" id="steps">
-        <li><button class="step" data-stage="0"><span class="n">1</span><span><b data-i18n="s1b">Откройте бота</b><small data-i18n="s1s">/start — и меню под рукой</small></span></button></li>
-        <li><button class="step" data-stage="1"><span class="n">2</span><span><b data-i18n="s2b">Соберите корзину</b><small data-i18n="s2s">Блюда и геолокация для доставки</small></span></button></li>
-        <li><button class="step" data-stage="2"><span class="n">3</span><span><b data-i18n="s3b">Следите за заказом</b><small data-i18n="s3s">Статус обновляется в чате</small></span></button></li>
+        <li><button class="step" data-stage="0"><span class="n">1</span><span><b data-i18n="s1b">Открывает бота</b><small data-i18n="s1s">Меню ресторана — в Telegram</small></span></button></li>
+        <li><button class="step" data-stage="1"><span class="n">2</span><span><b data-i18n="s2b">Собирает корзину и платит</b><small data-i18n="s2s">Геолокация вместо адреса, оплата картой в чате</small></span></button></li>
+        <li><button class="step" data-stage="2"><span class="n">3</span><span><b data-i18n="s3b">Следит за заказом</b><small data-i18n="s3s">Статус приходит сообщением от бота</small></span></button></li>
       </ol>
 
-      <a class="btn main" data-bot data-i18n="order" href="https://t.me/nurlight_delivery_bot">Заказать в Telegram</a>
+      <div class="hero-actions">
+        <a class="btn" data-i18n="try_demo" href="https://t.me/nurlight_delivery_bot">Попробовать демо-бота</a>
+        <a class="btn btn-quiet" data-i18n="contact" href="https://t.me/bakaguy">Написать нам</a>
+      </div>
     </div>
 
     <div class="phone-wrap">
-      <div class="phone" data-i18n-label="phone_label" aria-label="Пример заказа в Telegram-боте Nurlight">
+      <div class="phone" data-i18n-label="phone_label" aria-label="Пример заказа в Telegram-боте ресторана">
         <div class="screen">
           <div class="tg-head">
             <span class="tg-back">‹</span>
@@ -55,28 +64,84 @@
           <div class="tg-input"><span data-i18n="tg_input">Сообщение</span></div>
         </div>
       </div>
-      <!-- TODO: когда в боте заработает оплата, добавить в сценарий сообщение со счётом (app.js, scenario) -->
+      <p class="phone-note" data-i18n="phone_note">Демо: так будет выглядеть бот вашего ресторана</p>
     </div>
   </section>
 
-
   <main>
-    <section class="section">
-      <h2 class="section-title" data-i18n="why">Почему через Telegram</h2>
+    <!-- Что получает ресторан: четыре части продукта -->
+    <section class="section" id="product">
+      <h2 class="section-title" data-i18n="product_title">Что получает ресторан</h2>
       <div class="features">
-        <div class="card feature"><h3 data-i18n="f1h">Не нужно приложение</h3><p data-i18n="f1p">Бот открывается прямо в Telegram — без установки и пароля.</p></div>
-        <div class="card feature"><h3 data-i18n="f2h">Состав и статус каждого заказа</h3><p data-i18n="f2p">Раздел «Мои заказы» показывает, что заказано и на каком этапе заказ.</p></div>
-        <div class="card feature"><h3 data-i18n="f3h">Ответы на вопросы в чате</h3><p data-i18n="f3p">Спросите бота, что взять на компанию или сколько стоит доставка — ответит ИИ-консультант.</p></div>
-        <div class="card feature"><h3 data-i18n="f4h">Доставка 500 ₸</h3><p data-i18n="f4p">От 5 000 ₸ — бесплатно. Адрес не нужно печатать: достаточно отправить геолокацию.</p></div>
+        <div class="card feature"><h3 data-i18n="p1h">Бот для клиентов</h3><p data-i18n="p1p">Меню, корзина, оплата картой прямо в Telegram, статусы заказа. Русский, казахский и английский. ИИ-консультант отвечает на вопросы о меню и доставке.</p></div>
+        <div class="card feature"><h3 data-i18n="p2h">Панель оператора</h3><p data-i18n="p2p">Все заказы в одном списке: принять, назначить курьера, отменить. Геолокация клиента открывается на карте.</p></div>
+        <div class="card feature"><h3 data-i18n="p3h">Экран кухни</h3><p data-i18n="p3p">Повар видит только свои заказы и двигает их кнопками: «Готовится», «Упаковывается», «Готов».</p></div>
+        <div class="card feature"><h3 data-i18n="p4h">Статистика руководителя</h3><p data-i18n="p4p">Выручка, средний чек, популярные блюда и загрузка курьеров — за неделю, месяц или всё время.</p></div>
       </div>
+    </section>
+
+    <!-- Как идёт заказ: путь от бота до клиента и кто за что отвечает -->
+    <section class="section" id="flow">
+      <h2 class="section-title" data-i18n="flow_title">Как идёт заказ</h2>
+      <ol class="flow">
+        <li><span class="who" data-i18n="w_client">Клиент</span><b data-i18n="f1">Заказывает и платит в боте</b></li>
+        <li><span class="who" data-i18n="w_operator">Оператор</span><b data-i18n="f2">Принимает заказ</b></li>
+        <li><span class="who" data-i18n="w_kitchen">Кухня</span><b data-i18n="f3">Готовит и упаковывает</b></li>
+        <li><span class="who" data-i18n="w_courier">Курьер</span><b data-i18n="f4">Забирает и везёт</b></li>
+        <li><span class="who" data-i18n="w_client">Клиент</span><b data-i18n="f5">Получает заказ</b></li>
+      </ol>
+      <p class="flow-note" data-i18n="flow_note">На каждом шаге клиент получает сообщение от бота — звонить и уточнять не нужно.</p>
+
+      <!-- Макет экрана кухни: как это выглядит в панели (данные демонстрационные) -->
+      <figure class="panel-mock card">
+        <div class="mock-bar"><span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-title" data-i18n="mock_title">Панель · Кухня</span></div>
+        <table>
+          <thead><tr><th data-i18n="m_no">Номер</th><th data-i18n="m_dishes">Блюда</th><th data-i18n="m_status">Статус</th></tr></thead>
+          <tbody>
+            <tr><td>000128</td><td data-i18n="m_row1">Пепперони × 1, Морс × 2</td><td><span class="pill cooking" data-i18n="st_cooking">Готовится</span></td></tr>
+            <tr><td>000129</td><td data-i18n="m_row2">Маргарита × 2</td><td><span class="pill packing" data-i18n="st_packing">Упаковывается</span></td></tr>
+            <tr><td>000130</td><td data-i18n="m_row3">Четыре сыра × 1, Айран × 1</td><td><span class="pill accepted" data-i18n="st_accepted">Принят</span></td></tr>
+          </tbody>
+        </table>
+        <div class="mock-actions"><span data-i18n="a_cook">Начать готовить</span><span data-i18n="a_pack">Упаковать</span><span class="on" data-i18n="a_ready">Готово</span></div>
+        <figcaption data-i18n="mock_caption">Экран кухни в панели. Данные демонстрационные.</figcaption>
+      </figure>
+    </section>
+
+    <!-- Модель работы: суммы «по запросу», пока их не утвердила команда -->
+    <section class="section" id="model">
+      <h2 class="section-title" data-i18n="model_title">Как мы работаем</h2>
+      <div class="model">
+        <div class="card price"><h3 data-i18n="m1h">Внедрение</h3><p class="price-value" data-i18n="on_request">по запросу</p><p data-i18n="m1p">Разово: бот и панель под ваш бренд, загрузка меню, обучение команды.</p></div>
+        <div class="card price"><h3 data-i18n="m2h">Подписка</h3><p class="price-value" data-i18n="on_request">по запросу</p><p data-i18n="m2p">Каждый месяц: работа бота и панели, обновления и поддержка.</p></div>
+        <ul class="card terms">
+          <li data-i18n="t1">Без комиссии с заказов</li>
+          <li data-i18n="t2">Курьеры, меню и клиентская база остаются у ресторана</li>
+          <li data-i18n="t3">Оплата картой — через платёжный сервис ресторана</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Подключение: четыре шага, без обещаний по срокам -->
+    <section class="section" id="start">
+      <h2 class="section-title" data-i18n="start_title">Как подключиться</h2>
+      <ol class="connect">
+        <li class="card"><span class="n">1</span><h3 data-i18n="c1h">Знакомство</h3><p data-i18n="c1p">Показываем демо-бота и панель на ваших задачах.</p></li>
+        <li class="card"><span class="n">2</span><h3 data-i18n="c2h">Меню и бренд</h3><p data-i18n="c2p">Собираем меню с ценами и фото, цены доставки, название и логотип.</p></li>
+        <li class="card"><span class="n">3</span><h3 data-i18n="c3h">Настройка</h3><p data-i18n="c3p">Запускаем бота ресторана и панель, заводим оператора, кухню и курьеров.</p></li>
+        <li class="card"><span class="n">4</span><h3 data-i18n="c4h">Запуск</h3><p data-i18n="c4p">Обучаем команду и проводим первые заказы вместе.</p></li>
+      </ol>
     </section>
 
     <section class="section cta card">
       <div>
-        <h2 data-i18n="cta_h">Меню и цены — в боте</h2>
-        <p data-i18n="cta_p">@nurlight_delivery_bot в Telegram</p>
+        <h2 data-i18n="cta_h">Посмотрите, как это работает</h2>
+        <p data-i18n="cta_p">Откройте демо-бота и закажите что-нибудь — оплата тестовая, деньги не списываются.</p>
       </div>
-      <a class="btn" data-bot data-i18n="order" href="https://t.me/nurlight_delivery_bot">Заказать в Telegram</a>
+      <div class="hero-actions">
+        <a class="btn" data-i18n="try_demo" href="https://t.me/nurlight_delivery_bot">Попробовать демо-бота</a>
+        <a class="btn btn-quiet" data-i18n="contact" href="https://t.me/bakaguy">Написать нам</a>
+      </div>
     </section>
   </main>
 

@@ -155,9 +155,79 @@ a { color: inherit; }
 .msg.loc b, .msg.loc time { margin-left: 6px; }
 .msg.loc { font-size: 13px; }
 
+/* ---------- B2B-визитка: навигация, первый экран ---------- */
+.top-nav { display: flex; gap: 24px; font-size: 15px; }
+.top-nav a { color: var(--muted); text-decoration: none; transition: color 150ms var(--ease); }
+.top-nav a:hover { color: var(--text); }
+.steps-title { font-weight: 600; margin-bottom: 8px; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.phone-note { margin-top: 12px; text-align: center; font-size: 14px; color: var(--muted); }
+
+/* Путь заказа: кто что делает */
+.flow {
+  list-style: none; padding: 0; margin: 0 0 16px;
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; counter-reset: flow;
+}
+.flow li {
+  position: relative; padding: 16px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border);
+  display: grid; gap: 4px; align-content: start;
+}
+.flow .who { font-size: 13px; color: var(--primary-dark); font-weight: 600; }
+.flow b { font-weight: 500; line-height: 1.35; }
+.flow li:not(:last-child)::after {
+  content: "→"; position: absolute; right: -9px; top: 50%; transform: translateY(-50%);
+  color: var(--muted); font-size: 14px; background: var(--bg); line-height: 1; padding: 2px 0;
+}
+.flow-note { color: var(--muted); margin-bottom: 32px; }
+
+/* Макет экрана кухни */
+.card.panel-mock { margin: 0; padding: 0; overflow: hidden; }
+.mock-bar { display: flex; align-items: center; gap: 6px; padding: 12px 16px; border-bottom: 1px solid var(--border); background: #FBF6EF; }
+.mock-dot { width: 10px; height: 10px; border-radius: 50%; background: #E3D7C8; }
+.mock-title { margin-left: 8px; font-size: 14px; color: var(--muted); font-weight: 500; }
+.panel-mock table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.panel-mock th { text-align: left; font-weight: 500; color: var(--muted); font-size: 13px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.panel-mock td { padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.panel-mock td:first-child { font-variant-numeric: tabular-nums; color: var(--muted); width: 1%; white-space: nowrap; }
+.pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 13px; font-weight: 500; white-space: nowrap; }
+.pill.cooking { background: #FDE6D6; color: #B4470F; }
+.pill.packing { background: #FBF0C9; color: #8A6A05; }
+.pill.accepted { background: #DCE8FB; color: #1F4FA8; }
+.mock-actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px; }
+.mock-actions span { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 14px; color: var(--muted); }
+.mock-actions span.on { background: var(--text); border-color: var(--text); color: #fff; }
+.panel-mock figcaption { padding: 0 16px 16px; font-size: 13px; color: var(--muted); }
+
+/* Модель работы */
+.model { display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 16px; }
+.price-value { font-size: 24px; font-weight: 500; color: var(--text) !important; margin: 8px 0 !important; }
+.terms { list-style: none; margin: 0; display: grid; gap: 12px; align-content: center; }
+.terms li { padding-left: 24px; position: relative; }
+.terms li::before { content: ""; position: absolute; left: 0; top: .55em; width: 10px; height: 10px; border-radius: 50%; background: var(--primary); }
+
+/* Подключение */
+.connect { list-style: none; padding: 0; margin: 0; display: grid; gap: 16px; grid-template-columns: repeat(4, 1fr); }
+.connect .n {
+  display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; margin-bottom: 16px;
+  background: var(--primary-soft); color: var(--primary-dark); font-weight: 600; font-size: 15px;
+}
+
+@media (max-width: 960px) {
+  .top-nav { display: none; }
+  .flow { grid-template-columns: 1fr; }
+  .flow li:not(:last-child)::after { content: "↓"; right: auto; left: 24px; top: auto; bottom: -13px; transform: none; }
+  .model, .connect { grid-template-columns: 1fr 1fr; }
+  .terms { grid-column: 1 / -1; }
+}
+@media (max-width: 600px) {
+  .model, .connect { grid-template-columns: 1fr; }
+  .hero-actions .btn { width: 100%; }
+  .panel-mock td:nth-child(2) { font-size: 14px; }
+}
+
 /* ---------- Секции ---------- */
 main { position: relative; z-index: 1; }
-.section { max-width: 1160px; margin: 0 auto; padding: 48px 16px; }
+.section { max-width: 1160px; margin: 0 auto; padding: 48px 16px; scroll-margin-top: 64px; }
 .section-title { margin-bottom: 32px; }
 .card {
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
