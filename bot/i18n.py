@@ -28,7 +28,7 @@ def _(ru: str, kk: str, en: str) -> dict[str, str]:
 
 TEXTS: dict[str, dict[str, str]] = {
     # ---------- Главное меню ----------
-    "btn_catalog": _("🛍 Каталог", "🛍 Каталог", "🛍 Catalog"),
+    "btn_catalog": _("🛍 Каталог", "🛍 Мәзір", "🛍 Catalog"),
     "btn_cart": _("🛒 Корзина", "🛒 Себет", "🛒 Cart"),
     "btn_orders": _("📦 Мои заказы", "📦 Тапсырыстарым", "📦 My orders"),
     "btn_faq": _("❓ Частые вопросы", "❓ Жиі қойылатын сұрақтар", "❓ FAQ"),
@@ -51,7 +51,7 @@ TEXTS: dict[str, dict[str, str]] = {
     # ---------- Каталог ----------
     "catalog_empty": _(
         "Каталог пока пуст. Загляните позже!",
-        "Каталог әзірге бос. Кейінірек қараңыз!",
+        "Мәзір әзірге бос. Кейінірек қараңыз!",
         "The catalog is empty for now. Please check back later!",
     ),
     "choose_category": _("Выберите категорию:", "Санатты таңдаңыз:", "Choose a category:"),
@@ -77,7 +77,7 @@ TEXTS: dict[str, dict[str, str]] = {
     # ---------- Корзина ----------
     "cart_empty": _(
         "Корзина пуста. Загляните в каталог 🛍",
-        "Себет бос. Каталогқа кіріп көріңіз 🛍",
+        "Себет бос. Мәзірге кіріп көріңіз 🛍",
         "Your cart is empty. Take a look at the catalog 🛍",
     ),
     "cart_title": _("🛒 <b>Ваша корзина</b>\n", "🛒 <b>Сіздің себетіңіз</b>\n", "🛒 <b>Your cart</b>\n"),
@@ -182,12 +182,12 @@ TEXTS: dict[str, dict[str, str]] = {
     ),
     "cart_empty_to_catalog": _(
         "Корзина пуста. Вернитесь в каталог.",
-        "Себет бос. Каталогқа оралыңыз.",
+        "Себет бос. Мәзірге оралыңыз.",
         "Your cart is empty. Go back to the catalog.",
     ),
     "cart_empty_choose": _(
         "Корзина пуста. Выберите товары в каталоге.",
-        "Себет бос. Тауарларды каталогтан таңдаңыз.",
+        "Себет бос. Тауарларды мәзірден таңдаңыз.",
         "Your cart is empty. Choose items in the catalog.",
     ),
     "order_data": _("📋 Данные заказа:", "📋 Тапсырыс деректері:", "📋 Order details:"),
@@ -555,6 +555,23 @@ def variants(key: str) -> frozenset[str]:
     found = set(TEXTS[key].values())
     found.update(LEGACY_VARIANTS.get(key, []))
     return frozenset(found)
+
+
+def localized(obj, field: str, lang: str | None = None) -> str:
+    """Название или описание из базы на языке клиента.
+
+    У категорий и товаров есть поля name_kk, name_en, description_kk, description_en
+    (их заполняют в панели). Если перевода нет, показывается русский текст.
+    """
+    lang = lang_or_default(lang or current_lang.get())
+
+    if lang != DEFAULT_LANG:
+        text = getattr(obj, f"{field}_{lang}", "") or ""
+
+        if text.strip():
+            return text
+
+    return getattr(obj, field, "") or ""
 
 
 def status_label(status: str, lang: str | None = None) -> str:

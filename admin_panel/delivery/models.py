@@ -28,6 +28,10 @@ class Client(models.Model):
 
 class Category(models.Model):
     name = models.CharField(_("Название"), max_length=255)
+    # Переводы для бота: пусто — показывается русское название. db_default нужен,
+    # чтобы код без этих полей мог работать с общей базой
+    name_kk = models.CharField(_("Название (қазақша)"), max_length=255, blank=True, default="", db_default="")
+    name_en = models.CharField(_("Название (English)"), max_length=255, blank=True, default="", db_default="")
     sort_order = models.PositiveIntegerField(_("Порядок"), default=0)
 
     class Meta:
@@ -42,6 +46,11 @@ class Category(models.Model):
 class Product(models.Model):
     name = models.CharField(_("Название"), max_length=255)
     description = models.TextField(_("Описание"), blank=True)
+    # Переводы для бота: пусто — показывается русский текст
+    name_kk = models.CharField(_("Название (қазақша)"), max_length=255, blank=True, default="", db_default="")
+    name_en = models.CharField(_("Название (English)"), max_length=255, blank=True, default="", db_default="")
+    description_kk = models.TextField(_("Описание (қазақша)"), blank=True, default="", db_default="")
+    description_en = models.TextField(_("Описание (English)"), blank=True, default="", db_default="")
     price = models.DecimalField(_("Цена"), max_digits=10, decimal_places=2)
     category = models.ForeignKey(
         Category, on_delete=models.PROTECT, related_name="products", verbose_name=_("Категория")

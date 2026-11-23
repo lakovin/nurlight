@@ -1,6 +1,6 @@
 from django.utils import timezone
 
-from bot.i18n import status_label
+from bot.i18n import localized, status_label
 from bot.services.validation import format_money
 from delivery.models import Order
 
@@ -109,7 +109,7 @@ async def get_order_for_client(
     # Цена берётся из OrderItem, а не из каталога
     items = [
         {
-            "name": item.product.name,
+            "name": localized(item.product, "name"),
             "quantity": item.quantity,
             "price": item.price,
         }
