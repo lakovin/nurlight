@@ -52,6 +52,9 @@ class NotificationTests(BotTestCase):
         await self.set_status(order, Order.Status.ACCEPTED)
         self.assertEqual(len(self.bot.sent), 1)
         self.assertEqual(self.bot.sent[0][0], TG_ID)
+        # в сообщении номер среди заказов клиента, а не общий номер из панели
+        self.assertIn("№1", self.bot.sent[0][1])
+        self.assertNotIn(order.number, self.bot.sent[0][1])
 
         self.bot.sent.clear()
         await n.poll_once(self.bot, self.started)  # повторная проверка

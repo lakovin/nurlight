@@ -4,6 +4,7 @@ from delivery.models import Order
 
 from bot.services.my_orders import (
     cancel_by_client,
+    client_order_number,
     get_last_orders,
     get_order_for_client,
     get_orders_context,
@@ -39,9 +40,42 @@ class OrderCardTests(BotTestCase):
         order = await self.make_order(self.pizza)
         await Order.objects.filter(pk=order.pk).aupdate(address="СЕКРЕТНЫЙ АДРЕС")
         context = await get_orders_context(TG_ID)
-        self.assertIn(order.number, context)
+        self.assertIn("№1", context)
         self.assertNotIn("СЕКРЕТНЫЙ", context)
         self.assertNotIn("9998877", context)
+
+
+class ClientOrderNumberTests(BotTestCase):
+    """Клиент видит номер среди СВОИХ заказов, а не общий номер из базы."""
+
+    async def test_numbers_count_only_own_orders(self):
+        first = await self.make_order(telegram_id=TG_ID)
+        await self.make_order(telegram_id=OTHER_TG_ID)  # чужой заказ между своими
+        await self.make_order(telegram_id=OTHER_TG_ID)
+        second = await self.make_order(telegram_id=TG_ID)
+
+        self.assertEqual(await client_order_number(first.pk), "1")
+        self.assertEqual(await client_order_number(second.pk), "2")
+        # общий номер из панели у второго заказа больше: он не должен попасть клиенту
+        self.assertNotEqual(second.number, "000002")
+
+    async def test_order_card_and_list_use_client_numbers(self):
+        await self.make_order(telegram_id=OTHER_TG_ID)
+        first = await self.make_order(telegram_id=TG_ID)
+        second = await self.make_order(telegram_id=TG_ID)
+
+        card = await get_order_for_client(TG_ID, second.pk)
+        self.assertEqual(card["number"], "2")
+
+        listed = await get_last_orders(TG_ID)
+        self.assertEqual([o["number"] for o in listed], ["2", "1"])
+        self.assertEqual([o["id"] for o in listed], [second.pk, first.pk])
+
+    async def test_numbers_of_different_clients_are_independent(self):
+        mine = await self.make_order(telegram_id=TG_ID)
+        theirs = await self.make_order(telegram_id=OTHER_TG_ID)
+        self.assertEqual(await client_order_number(mine.pk), "1")
+        self.assertEqual(await client_order_number(theirs.pk), "1")
 
 
 class CancelTests(BotTestCase):

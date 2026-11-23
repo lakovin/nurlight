@@ -11,10 +11,14 @@ from pathlib import Path
 
 TEST_DB_NAME = ".test_bot.sqlite3"
 
-# Своя база для тестов: настройка из .env (в том числе Neon) не используется
+# Тесты не зависят от вашего .env (база, токены, цены доставки заданы здесь):
+# настройки проекта читают .env, но не перезаписывают уже заданные переменные
 os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_NAME}"
-os.environ.pop("PAYMENT_PROVIDER_TOKEN", None)
+os.environ["DELIVERY_FEE"] = "500"
+os.environ["DELIVERY_FREE_FROM"] = "5000"
+os.environ["PAYMENT_PROVIDER_TOKEN"] = ""  # пустое значение: токен из .env не подтянется
 os.environ["PAYMENT_DEMO"] = "1"
+os.environ["GEMINI_API_KEY"] = ""
 
 from bot.services.db import setup_django  # noqa: E402
 

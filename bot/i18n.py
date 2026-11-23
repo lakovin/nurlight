@@ -317,9 +317,9 @@ TEXTS: dict[str, dict[str, str]] = {
         "⚠️ Could not create the order. Please try again.",
     ),
     "order_created": _(
-        "✅ <b>Заказ №{number} создан!</b>\n\nЗаказ ожидает обработки оператором.",
-        "✅ <b>№{number} тапсырыс жасалды!</b>\n\nТапсырыс оператордың өңдеуін күтуде.",
-        "✅ <b>Order #{number} created!</b>\n\nThe order is waiting for the operator.",
+        "✅ <b>Заказ создан!</b>\nНомер вашего заказа: <b>№{number}</b>\n\nЗаказ ожидает обработки оператором.",
+        "✅ <b>Тапсырыс жасалды!</b>\nТапсырысыңыздың нөмірі: <b>№{number}</b>\n\nТапсырыс оператордың өңдеуін күтуде.",
+        "✅ <b>Order created!</b>\nYour order number: <b>#{number}</b>\n\nThe order is waiting for the operator.",
     ),
     "pay_hint": _(
         "💳 Оплатить заказ можно счётом выше или позже в разделе «Мои заказы».",

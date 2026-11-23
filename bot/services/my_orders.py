@@ -25,6 +25,43 @@ def status_text(order: Order) -> str:
     return f"{emoji} {status_label(order.status)}".strip()
 
 
+# Номер заказа для клиента: порядковый среди ЕГО заказов (1, 2, 3...).
+# Общий номер (Order.number, 000019) виден только в панели: по нему
+# клиент не может узнать, сколько всего заказов в сервисе.
+
+async def client_numbers(client_id: int) -> dict[int, str]:
+    """{id заказа: номер для клиента} по всем заказам одного клиента."""
+    ids = [
+        pk
+        async for pk in (
+            Order.objects
+            .filter(client_id=client_id)
+            .order_by("id")
+            .values_list("pk", flat=True)
+        )
+    ]
+    return {pk: str(index) for index, pk in enumerate(ids, start=1)}
+
+
+async def client_order_number(order_id: int) -> str:
+    """Номер одного заказа среди заказов его клиента."""
+    client_id = await (
+        Order.objects
+        .filter(pk=order_id)
+        .values_list("client_id", flat=True)
+        .afirst()
+    )
+
+    if client_id is None:
+        return "?"
+
+    number = await Order.objects.filter(
+        client_id=client_id, pk__lte=order_id
+    ).acount()
+
+    return str(number)
+
+
 async def get_last_orders(
     telegram_id: int,
     limit: int = ORDERS_LIMIT,
@@ -37,16 +74,19 @@ async def get_last_orders(
         .order_by("-created_at", "-id")[:limit]
     )
 
+    orders = [order async for order in queryset]
+    numbers = await client_numbers(orders[0].client_id) if orders else {}
+
     return [
         {
             "id": order.pk,
-            "number": order.number,
+            "number": numbers.get(order.pk, "?"),
             "status": order.status,
             "status_text": status_text(order),
             "total": order.total,
             "created": timezone.localtime(order.created_at),
         }
-        async for order in queryset
+        for order in orders
     ]
 
 
@@ -78,7 +118,7 @@ async def get_order_for_client(
 
     return {
         "id": order.pk,
-        "number": order.number,
+        "number": await client_order_number(order.pk),
         "status": order.status,
         "status_text": status_text(order),
         "created": timezone.localtime(order.created_at),
@@ -107,15 +147,19 @@ async def get_orders_context(telegram_id: int, limit: int = 3) -> str:
     now = timezone.localtime()
     lines = [f"Сейчас: {now:%d.%m.%Y, %H:%M} (время Алматы)."]
 
-    orders = (
-        Order.objects
-        .filter(client__telegram_id=telegram_id)
-        .order_by("-created_at", "-id")[:limit]
-    )
+    orders = [
+        order
+        async for order in (
+            Order.objects
+            .filter(client__telegram_id=telegram_id)
+            .order_by("-created_at", "-id")[:limit]
+        )
+    ]
+    numbers = await client_numbers(orders[0].client_id) if orders else {}
 
     found = False
 
-    async for order in orders:
+    for order in orders:
         found = True
 
         items = ", ".join([
@@ -126,7 +170,7 @@ async def get_orders_context(telegram_id: int, limit: int = 3) -> str:
         created = timezone.localtime(order.created_at)
 
         lines.append(
-            f"№{order.number} — статус: {order.get_status_display()} — "
+            f"№{numbers.get(order.pk, '?')} — статус: {order.get_status_display()} — "
             f"сумма: {format_money(order.total)} — "
             f"создан: {created:%d.%m.%Y, %H:%M} — состав: {items or '—'}"
         )

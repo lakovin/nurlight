@@ -27,6 +27,7 @@ from bot.services.payment import (
 from bot.services.my_orders import (
     ORDERS_LIMIT,
     cancel_by_client,
+    client_order_number,
     get_last_orders,
     get_order_for_client,
 )
@@ -320,7 +321,7 @@ async def confirm_cancel(
         mark_known(order_id, Order.Status.CANCELLED)
 
         order = await get_order_for_client(callback.from_user.id, order_id)
-        number = order["number"] if order else f"{order_id:06d}"
+        number = order["number"] if order else await client_order_number(order_id)
 
         await callback.message.edit_text(
             t("cancel_done", number=number),

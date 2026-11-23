@@ -32,6 +32,7 @@ from bot.services.payment import (
     available as payment_available,
     send_order_invoice,
 )
+from bot.services.my_orders import client_order_number
 from bot.services.orders import (
     create_order,
     get_client_phone,
@@ -736,13 +737,16 @@ async def confirm_order(
 
         await state.clear()
 
+        # Клиент видит номер среди своих заказов, а не общий номер заказа
+        client_number = await client_order_number(order.pk)
+
         try:
             await callback.message.edit_reply_markup(
                 reply_markup=None
             )
 
             await callback.message.answer(
-                t("order_created", number=order.number),
+                t("order_created", number=client_number),
                 reply_markup=main_menu(),
             )
 
@@ -758,7 +762,7 @@ async def confirm_order(
             if await send_order_invoice(
                 callback.message,
                 order.pk,
-                order.number,
+                client_number,
                 order.total - order.delivery_fee,
                 order.delivery_fee,
             ):

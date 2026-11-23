@@ -28,6 +28,7 @@ from django.utils import timezone
 
 from bot.i18n import t
 from bot.keyboards.my_orders import MyOrdersCallback
+from bot.services.my_orders import client_order_number
 from delivery.models import Order
 
 logger = logging.getLogger(__name__)
@@ -128,7 +129,7 @@ async def notify(
 ) -> bool:
     """Отправляет одно уведомление на языке клиента. True — больше пытаться не нужно."""
 
-    text = t(MESSAGES[status], language, number=f"{order_id:06d}")
+    text = t(MESSAGES[status], language, number=await client_order_number(order_id))
 
     try:
         await bot.send_message(
