@@ -155,9 +155,110 @@ a { color: inherit; }
 .msg.loc b, .msg.loc time { margin-left: 6px; }
 .msg.loc { font-size: 13px; }
 
+/* ---------- B2B-визитка: навигация, первый экран ---------- */
+.top-nav { display: flex; gap: 24px; font-size: 15px; }
+.top-nav a { color: var(--muted); text-decoration: none; transition: color 150ms var(--ease); }
+.top-nav a:hover { color: var(--text); }
+.steps-title { font-weight: 600; margin-bottom: 8px; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.phone-note { margin-top: 12px; text-align: center; font-size: 14px; color: var(--muted); }
+
+/* Путь заказа: кто что делает */
+.flow {
+  list-style: none; padding: 0; margin: 0 0 16px;
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; counter-reset: flow;
+}
+.flow li {
+  position: relative; padding: 16px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border);
+  display: grid; gap: 4px; align-content: start;
+}
+.flow .who { font-size: 13px; color: var(--primary-dark); font-weight: 600; }
+.flow b { font-weight: 500; line-height: 1.35; }
+.flow li:not(:last-child)::after {
+  content: "→"; position: absolute; right: -9px; top: 50%; transform: translateY(-50%);
+  color: var(--muted); font-size: 14px; background: var(--bg); line-height: 1; padding: 2px 0;
+}
+.flow-note { color: var(--muted); margin-bottom: 32px; }
+
+/* Макет экрана кухни */
+.card.panel-mock { margin: 0; padding: 0; overflow: hidden; }
+.mock-bar { display: flex; align-items: center; gap: 6px; padding: 12px 16px; border-bottom: 1px solid var(--border); background: #FBF6EF; }
+.mock-dot { width: 10px; height: 10px; border-radius: 50%; background: #E3D7C8; }
+.mock-title { margin-left: 8px; font-size: 14px; color: var(--muted); font-weight: 500; }
+.panel-mock table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.panel-mock th { text-align: left; font-weight: 500; color: var(--muted); font-size: 13px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.panel-mock td { padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.panel-mock td:first-child { font-variant-numeric: tabular-nums; color: var(--muted); width: 1%; white-space: nowrap; }
+.pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 13px; font-weight: 500; white-space: nowrap; }
+.pill.cooking { background: #FDE6D6; color: #B4470F; }
+.pill.packing { background: #FBF0C9; color: #8A6A05; }
+.pill.accepted { background: #DCE8FB; color: #1F4FA8; }
+.mock-actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px; }
+.mock-actions span { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 14px; color: var(--muted); }
+.mock-actions span.on { background: var(--text); border-color: var(--text); color: #fff; }
+.panel-mock figcaption { padding: 0 16px 16px; font-size: 13px; color: var(--muted); }
+
+/* Модель работы */
+.model { display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 16px; }
+.price-value { font-size: 24px; font-weight: 500; color: var(--text) !important; margin: 8px 0 !important; }
+.terms { list-style: none; margin: 0; display: grid; gap: 12px; align-content: center; }
+.terms li { padding-left: 24px; position: relative; }
+.terms li::before { content: ""; position: absolute; left: 0; top: .55em; width: 10px; height: 10px; border-radius: 50%; background: var(--primary); }
+
+/* Подключение */
+.connect { list-style: none; padding: 0; margin: 0; display: grid; gap: 16px; grid-template-columns: repeat(4, 1fr); }
+.connect .n {
+  display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; margin-bottom: 16px;
+  background: var(--primary-soft); color: var(--primary-dark); font-weight: 600; font-size: 15px;
+}
+
+@media (max-width: 960px) {
+  .top-nav { display: none; }
+  .flow { grid-template-columns: 1fr; }
+  .flow li:not(:last-child)::after { content: "↓"; right: auto; left: 24px; top: auto; bottom: -13px; transform: none; }
+  .model, .connect { grid-template-columns: 1fr 1fr; }
+  .terms { grid-column: 1 / -1; }
+}
+@media (max-width: 600px) {
+  .model, .connect { grid-template-columns: 1fr; }
+  .hero-actions .btn { width: 100%; }
+  .panel-mock td:nth-child(2) { font-size: 14px; }
+}
+
+/* ---------- Фон: узор из иконок, как обои Telegram ----------
+   Отдельный неподвижный слой; при прокрутке app.js двигает его через transform (видеокарта),
+   страница при этом не перерисовывается. Плитка 240×240 — та же цифра в app.js. */
+.doodles {
+  position: fixed; left: 0; right: 0; top: 0; height: calc(100vh + 240px); height: calc(100lvh + 240px);
+  z-index: -1; pointer-events: none; will-change: transform;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22240%22 height=%22240%22 viewBox=%220 0 240 240%22 fill=%22none%22 stroke=%22%23EEE2D3%22 stroke-width=%221.6%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E %3Cg transform=%22translate(24 22) rotate(-12)%22%3E%3Cpath d=%22M0 0 L30 8 L8 30 Z%22/%3E%3Ccircle cx=%2212%22 cy=%2210%22 r=%222%22/%3E%3Ccircle cx=%229%22 cy=%2219%22 r=%221.6%22/%3E%3Ccircle cx=%2218%22 cy=%2213%22 r=%221.6%22/%3E%3C/g%3E %3Cg transform=%22translate(150 30) rotate(8)%22%3E%3Cpath d=%22M2 6 H22 L19 34 H5 Z%22/%3E%3Cpath d=%22M14 6 L18 -4%22/%3E%3Cpath d=%22M3 14 H21%22/%3E%3C/g%3E %3Cg transform=%22translate(86 92) rotate(-6)%22%3E%3Crect x=%220%22 y=%228%22 width=%2226%22 height=%2224%22 rx=%223%22/%3E%3Cpath d=%22M7 8 C7 0 19 0 19 8%22/%3E%3C/g%3E %3Cg transform=%22translate(190 118) rotate(10)%22%3E%3Cpath d=%22M12 30 C4 20 0 15 0 10 A12 12 0 0 1 24 10 C24 15 20 20 12 30 Z%22/%3E%3Ccircle cx=%2212%22 cy=%2210%22 r=%224%22/%3E%3C/g%3E %3Cg transform=%22translate(30 150) rotate(-4)%22%3E%3Crect x=%220%22 y=%220%22 width=%2234%22 height=%2222%22 rx=%228%22/%3E%3Cpath d=%22M8 22 L6 30 L15 22%22/%3E%3Cpath d=%22M9 9 H25 M9 14 H19%22/%3E%3C/g%3E %3Cg transform=%22translate(120 182) rotate(6)%22%3E%3Ccircle cx=%226%22 cy=%2222%22 r=%225%22/%3E%3Ccircle cx=%2232%22 cy=%2222%22 r=%225%22/%3E%3Cpath d=%22M6 22 H20 L26 8 H33%22/%3E%3Cpath d=%22M14 22 L18 12 H8%22/%3E%3Cpath d=%22M30 8 L32 4%22/%3E%3C/g%3E %3Cg transform=%22translate(206 206)%22%3E%3Ccircle cx=%220%22 cy=%220%22 r=%221.6%22/%3E%3C/g%3E%3Cg transform=%22translate(70 30)%22%3E%3Ccircle cx=%220%22 cy=%220%22 r=%221.6%22/%3E%3C/g%3E%3Cg transform=%22translate(14 104)%22%3E%3Ccircle cx=%220%22 cy=%220%22 r=%221.6%22/%3E%3C/g%3E %3C/svg%3E");
+  background-size: 240px 240px;
+}
+body { isolation: isolate; }
+
+/* ---------- Карточки-чеки ---------- */
+.receipt {
+  display: flex;
+  /* Тонкий контур и тень повторяют зубчатый край (обычная рамка обрезалась бы маской) */
+  filter: drop-shadow(0 0 .6px rgba(31, 26, 23, .32)) drop-shadow(0 6px 10px rgba(90, 50, 10, .05));
+}
+.paper {
+  flex: 1; display: flex; flex-direction: column; gap: 8px;
+  background: var(--surface); padding: 20px 24px 32px; border-radius: 12px 12px 0 0;
+  /* Зубчатый нижний край, как у оторванного чека */
+  -webkit-mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / 14px 100%;
+          mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / 14px 100%;
+}
+.paper p { color: var(--muted); }
+.r-head, .r-total { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12px; color: var(--muted); }
+.r-head { display: flex; justify-content: space-between; padding-bottom: 12px; margin-bottom: 8px; border-bottom: 1px dashed var(--border); }
+.r-total { display: flex; align-items: baseline; gap: 6px; margin-top: auto; padding-top: 12px; border-top: 1px dashed var(--border); }
+.r-total .dots { flex: 1; border-bottom: 1px dotted #D9C9B5; transform: translateY(-3px); }
+.r-total span:last-child { color: var(--text); }
+
 /* ---------- Секции ---------- */
 main { position: relative; z-index: 1; }
-.section { max-width: 1160px; margin: 0 auto; padding: 48px 16px; }
+.section { max-width: 1160px; margin: 0 auto; padding: 48px 16px; scroll-margin-top: 64px; }
 .section-title { margin-bottom: 32px; }
 .card {
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
