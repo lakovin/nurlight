@@ -4,6 +4,7 @@ from aiogram import F, Router
 from aiogram.types import CallbackQuery, Message, PreCheckoutQuery
 from asgiref.sync import sync_to_async
 
+from bot.i18n import t
 from bot.keyboards.payment import DemoPayCallback
 from bot.services.payment import demo_enabled, demo_pay
 from delivery import payments
@@ -20,7 +21,7 @@ async def demo_pay_handler(
     """Демо-оплата: отмечает заказ оплаченным без списания денег."""
 
     if not demo_enabled():
-        await callback.answer("Тестовая оплата выключена.", show_alert=True)
+        await callback.answer(t("demo_off"), show_alert=True)
         return
 
     try:
@@ -30,16 +31,13 @@ async def demo_pay_handler(
         )
     except Exception:
         logger.exception("Ошибка демо-оплаты")
-        error = "Не удалось выполнить оплату. Попробуйте позже."
+        error = t("pay_failed")
 
     if error:
         await callback.answer(error, show_alert=True)
         return
 
-    await callback.message.edit_text(
-        "✅ Тестовая оплата прошла.\n"
-        "Деньги не списывались, заказ отмечен оплаченным.",
-    )
+    await callback.message.edit_text(t("demo_done"))
     await callback.answer()
 
 
@@ -56,7 +54,7 @@ async def before_payment(query: PreCheckoutQuery):
         )
     except Exception:
         logger.exception("Ошибка проверки перед оплатой")
-        error = "Не удалось проверить заказ. Попробуйте ещё раз позже."
+        error = t("precheck_failed")
 
     await query.answer(ok=error is None, error_message=error)
 
@@ -84,10 +82,7 @@ async def payment_done(message: Message):
             payment.provider_payment_charge_id,
         )
 
-        await message.answer(
-            "✅ Платёж получен. Не удалось сразу отметить его в системе, "
-            "оператор проверит оплату вручную."
-        )
+        await message.answer(t("payment_manual"))
         return
 
     if not marked:
@@ -97,4 +92,4 @@ async def payment_done(message: Message):
             payment.telegram_payment_charge_id,
         )
 
-    await message.answer("✅ Оплата прошла, спасибо! Заказ передан оператору.")
+    await message.answer(t("payment_ok"))

@@ -1,6 +1,7 @@
 from aiogram.filters.callback_data import CallbackData
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+from bot.i18n import t
 from delivery.models import Category, Product
 from bot.keyboards.cart import CartCallback
 
@@ -32,9 +33,9 @@ def products_keyboard(products: list[Product]):
         if product.is_available:
             text = f"{product.name} — {product.price:.0f} ₸"
         else:
-            text = f"❌ {product.name} — нет в наличии"
+            text = t("product_btn_unavailable", name=product.name)
         builder.button(text=text, callback_data=ProductCallback(id=product.id))
-    builder.button(text="⬅️ К категориям", callback_data=BackToCategories())
+    builder.button(text=t("btn_to_categories"), callback_data=BackToCategories())
     builder.adjust(1)
     return builder.as_markup()
 
@@ -43,15 +44,15 @@ def product_keyboard(product: Product, qty: int = 0):
     # Недоступный товар: в корзину добавить нельзя, только вернуться назад
     if not product.is_available:
         builder = InlineKeyboardBuilder()
-        builder.button(text="⬅️ Назад", callback_data=CategoryCallback(id=product.category_id))
+        builder.button(text=t("btn_back"), callback_data=CategoryCallback(id=product.category_id))
         return builder.as_markup()
 
     # Выбор количества виден сразу (0 шт); первое нажатие на ➕ кладёт товар в корзину
     builder = InlineKeyboardBuilder()
     builder.button(text="➖", callback_data=CartCallback(action="minus", id=product.id))
-    builder.button(text=f"{qty} шт", callback_data=CartCallback(action="noop"))
+    builder.button(text=t("qty_pcs", qty=qty), callback_data=CartCallback(action="noop"))
     builder.button(text="➕", callback_data=CartCallback(action="add", id=product.id))
-    builder.button(text="🛒 Открыть корзину", callback_data=CartCallback(action="show"))
+    builder.button(text=t("btn_open_cart"), callback_data=CartCallback(action="show"))
     builder.adjust(3, 1)
-    builder.button(text="⬅️ Назад", callback_data=CategoryCallback(id=product.category_id))
+    builder.button(text=t("btn_back"), callback_data=CategoryCallback(id=product.category_id))
     return builder.as_markup()

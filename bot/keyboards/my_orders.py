@@ -2,6 +2,7 @@ from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+from bot.i18n import t
 from bot.keyboards.catalog import BackToCategories
 from bot.services.payment import can_invoice
 from delivery.models import Order
@@ -25,7 +26,7 @@ def orders_list_keyboard(orders: list[dict]) -> InlineKeyboardMarkup:
             ),
         )
 
-    builder.button(text="🛍 Каталог", callback_data=BackToCategories())
+    builder.button(text=t("btn_catalog"), callback_data=BackToCategories())
 
     builder.adjust(1)
     return builder.as_markup()
@@ -33,14 +34,14 @@ def orders_list_keyboard(orders: list[dict]) -> InlineKeyboardMarkup:
 
 def empty_orders_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
-    builder.button(text="🛍 Каталог", callback_data=BackToCategories())
+    builder.button(text=t("btn_catalog"), callback_data=BackToCategories())
     return builder.as_markup()
 
 
 def retry_list_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(
-        text="🔁 Повторить",
+        text=t("btn_retry"),
         callback_data=MyOrdersCallback(action="list"),
     )
     return builder.as_markup()
@@ -52,7 +53,7 @@ def order_card_keyboard(order: dict) -> InlineKeyboardMarkup:
     status = order["status"]
 
     builder.button(
-        text="🔄 Обновить",
+        text=t("btn_refresh"),
         callback_data=MyOrdersCallback(action="refresh", order_id=order_id),
     )
 
@@ -63,22 +64,22 @@ def order_card_keyboard(order: dict) -> InlineKeyboardMarkup:
         and can_invoice(order["total"])
     ):
         builder.button(
-            text="💳 Оплатить заказ",
+            text=t("btn_pay_order"),
             callback_data=MyOrdersCallback(action="pay", order_id=order_id),
         )
 
     # Отмена доступна только пока заказ «Новый» и не оплачен
     if status == Order.Status.NEW and not order["paid"]:
         builder.button(
-            text="❌ Отменить заказ",
+            text=t("btn_cancel_order"),
             callback_data=MyOrdersCallback(action="cancel", order_id=order_id),
         )
 
     if status in (Order.Status.DELIVERED, Order.Status.CANCELLED):
-        builder.button(text="🛍 Заказать ещё", callback_data=BackToCategories())
+        builder.button(text=t("btn_order_again"), callback_data=BackToCategories())
 
     builder.button(
-        text="⬅️ К списку",
+        text=t("btn_to_list"),
         callback_data=MyOrdersCallback(action="list"),
     )
 
@@ -90,13 +91,13 @@ def cancel_confirm_keyboard(order_id: int) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
 
     builder.button(
-        text="✅ Да, отменить",
+        text=t("btn_yes_cancel"),
         callback_data=MyOrdersCallback(
             action="cancel_confirm", order_id=order_id
         ),
     )
     builder.button(
-        text="⬅️ Нет, оставить",
+        text=t("btn_no_keep"),
         callback_data=MyOrdersCallback(
             action="cancel_abort", order_id=order_id
         ),
@@ -109,7 +110,7 @@ def cancel_confirm_keyboard(order_id: int) -> InlineKeyboardMarkup:
 def back_to_order_keyboard(order_id: int) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(
-        text="⬅️ К заказу",
+        text=t("btn_to_order"),
         callback_data=MyOrdersCallback(action="view", order_id=order_id),
     )
     return builder.as_markup()
@@ -117,6 +118,6 @@ def back_to_order_keyboard(order_id: int) -> InlineKeyboardMarkup:
 
 def after_cancel_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
-    builder.button(text="🛍 Каталог", callback_data=BackToCategories())
+    builder.button(text=t("btn_catalog"), callback_data=BackToCategories())
     builder.adjust(1)
     return builder.as_markup()

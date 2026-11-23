@@ -7,21 +7,14 @@ from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
 
+from bot.i18n import t
 from bot.keyboards.cart import CartCallback
-from bot.keyboards.main_menu import (
-    AI_BUTTON,
-    AI_BUTTON_LEGACY,
-    CART_BUTTON,
-    CATALOG_BUTTON,
-    FAQ_BUTTON,
-    MY_ORDERS_BUTTON,
-    main_menu,
-)
+from bot.keyboards.main_menu import ALL_MENU_BUTTONS, main_menu
 from bot.keyboards.order import (
-    CANCEL_BUTTON,
-    NO_COMMENT_BUTTON,
-    KEEP_PHONE_PREFIX,
-    SKIP_ADDRESS_BUTTON,
+    CANCEL_BUTTONS,
+    KEEP_PHONE_PREFIXES,
+    NO_COMMENT_BUTTONS,
+    SKIP_BUTTONS,
     OrderCallback,
     address_note_keyboard,
     cancel_keyboard,
@@ -39,6 +32,7 @@ from bot.services.payment import (
     available as payment_available,
     send_order_invoice,
 )
+from bot.services.my_orders import client_order_number
 from bot.services.orders import (
     create_order,
     get_client_phone,
@@ -74,15 +68,8 @@ async def reset_checkout(state: FSMContext) -> None:
         await state.update_data(cart=cart)
 
 
-# Кнопки главного меню: нажатие во время оформления прерывает его
-MENU_BUTTONS = {
-    CATALOG_BUTTON,
-    CART_BUTTON,
-    MY_ORDERS_BUTTON,
-    FAQ_BUTTON,
-    AI_BUTTON,
-    AI_BUTTON_LEGACY,
-}
+# Кнопки главного меню (на всех языках): нажатие во время оформления прерывает его
+MENU_BUTTONS = ALL_MENU_BUTTONS
 
 
 class CheckoutInterruptMiddleware(BaseMiddleware):
@@ -107,8 +94,8 @@ class CheckoutInterruptMiddleware(BaseMiddleware):
             data["raw_state"] = None
 
             await event.answer(
-                "❌ Оформление прервано. Корзина сохранена.",
-                reply_markup=main_menu,
+                t("checkout_interrupted"),
+                reply_markup=main_menu(),
             )
 
         return await handler(event, data)
@@ -138,7 +125,7 @@ async def show_order_summary(
         )
 
         await message.answer(
-            "⚠️ Некоторые товары стали недоступны:\n"
+            t("items_became_unavailable")
             + removed_names
         )
 
@@ -146,18 +133,18 @@ async def show_order_summary(
         await reset_checkout(state)
 
         await message.answer(
-            "Корзина пуста. Вернитесь в каталог.",
-            reply_markup=main_menu,
+            t("cart_empty_to_catalog"),
+            reply_markup=main_menu(),
         )
         return
 
     # Убираем кнопки ввода телефона и комментария
     await message.answer(
-        "📋 Данные заказа:",
+        t("order_data"),
         reply_markup=ReplyKeyboardRemove(),
     )
 
-    lines = ["<b>Проверьте заказ</b>", ""]
+    lines = [t("review_title"), ""]
     total = 0
 
     for product, quantity in items:
@@ -174,17 +161,27 @@ async def show_order_summary(
 
     lines.extend([
         "",
-        f"Блюда: {format_money(total)}",
+        t("label_items", amount=format_money(total)),
         f"🚚 {delivery_text(fee)}",
-        f"<b>Итого: {format_money(total + fee)}</b>",
-        f"📍 Геолокация: <a href=\"https://www.google.com/maps?q="
-        f"{data['latitude']},{data['longitude']}\">точка на карте</a>",
-        f"🏠 Уточнение: {html.escape(data.get('address') or 'нет')}",
-        f"📱 Телефон: {html.escape(format_phone(data['phone']))}",
-        f"💬 Комментарий: "
-        f"{html.escape(data.get('comment') or 'Нет')}",
+        t("label_total", amount=format_money(total + fee)),
+        t(
+            "summary_location",
+            url=(
+                "https://www.google.com/maps?q="
+                f"{data['latitude']},{data['longitude']}"
+            ),
+        ),
+        t(
+            "summary_note",
+            text=html.escape(data.get("address") or t("word_none_low")),
+        ),
+        t("summary_phone", text=html.escape(format_phone(data["phone"]))),
+        t(
+            "summary_comment",
+            text=html.escape(data.get("comment") or t("word_none_cap")),
+        ),
         "",
-        "Всё правильно?",
+        t("confirm_question"),
     ])
 
     await state.set_state(OrderForm.confirm)
@@ -210,9 +207,8 @@ async def after_phone_received(
     await state.set_state(OrderForm.comment)
 
     await message.answer(
-        "💬 <b>Шаг 4. Комментарий</b>\n\n"
-        "Напишите комментарий или нажмите «Без комментария».",
-        reply_markup=comment_keyboard,
+        t("step_comment"),
+        reply_markup=comment_keyboard(),
     )
 
 
@@ -248,24 +244,20 @@ async def start_checkout(
         )
 
         await callback.message.answer(
-            "⚠️ Недоступные товары убраны из корзины:\n"
+            t("items_removed_from_cart")
             + removed_names
         )
 
     if not items:
-        await callback.message.answer(
-            "Корзина пуста. Выберите товары в каталоге."
-        )
+        await callback.message.answer(t("cart_empty_choose"))
         return
 
     await state.update_data(editing=False)
     await state.set_state(OrderForm.location)
 
     await callback.message.answer(
-        "📍 <b>Шаг 1. Геолокация</b>\n\n"
-        "Нажмите кнопку «📍 Отправить геолокацию», чтобы курьер "
-        "нашёл вас на карте.",
-        reply_markup=location_keyboard,
+        t("step_location"),
+        reply_markup=location_keyboard(),
     )
 
 
@@ -273,7 +265,7 @@ async def start_checkout(
 
 @router.message(
     StateFilter(OrderForm),
-    F.text == CANCEL_BUTTON
+    F.text.in_(CANCEL_BUTTONS)
 )
 async def cancel_checkout(
     message: Message,
@@ -283,8 +275,8 @@ async def cancel_checkout(
     await reset_checkout(state)
 
     await message.answer(
-        "❌ Оформление отменено. Корзина сохранена.",
-        reply_markup=main_menu,
+        t("checkout_cancelled"),
+        reply_markup=main_menu(),
     )
 
 
@@ -304,8 +296,8 @@ async def cancel_order(
     )
 
     await callback.message.answer(
-        "❌ Оформление отменено. Корзина сохранена.",
-        reply_markup=main_menu,
+        t("checkout_cancelled"),
+        reply_markup=main_menu(),
     )
 
     await callback.answer()
@@ -333,18 +325,14 @@ async def receive_location(
     await state.set_state(OrderForm.address)
 
     await message.answer(
-        "🏠 <b>Шаг 2. Уточнение адреса</b>\n\n"
-        "Укажите подъезд, этаж, квартиру или домофон "
-        "либо нажмите «Пропустить».",
-        reply_markup=address_note_keyboard,
+        t("step_note"),
+        reply_markup=address_note_keyboard(),
     )
 
 
 @router.message(OrderForm.location)
 async def invalid_location(message: Message) -> None:
-    await message.answer(
-        "Отправьте геолокацию кнопкой «📍 Отправить геолокацию»."
-    )
+    await message.answer(t("need_location"))
 
 
 # ---------- Шаг 2. Уточнение адреса (по желанию) ----------
@@ -357,7 +345,7 @@ async def receive_address(
 
     address = message.text.strip()
 
-    if address == SKIP_ADDRESS_BUTTON:
+    if address in SKIP_BUTTONS:
         address = ""
     else:
         error = validate_address_note(address)
@@ -385,27 +373,20 @@ async def receive_address(
         await state.update_data(saved_phone=saved_phone)
 
         await message.answer(
-            "📱 <b>Шаг 3. Номер телефона</b>\n\n"
-            f"Ваш номер: <b>{html.escape(label)}</b>\n"
-            "Оставьте его кнопкой ниже или введите другой "
-            "(например: +7 777 123 45 67).",
+            t("step_phone_saved", phone=html.escape(label)),
             reply_markup=saved_phone_keyboard(label),
         )
         return
 
     await message.answer(
-        "📱 <b>Шаг 3. Номер телефона</b>\n\n"
-        "Отправьте номер кнопкой или введите вручную.\n"
-        "Например: +7 777 123 45 67",
-        reply_markup=phone_keyboard,
+        t("step_phone"),
+        reply_markup=phone_keyboard(),
     )
 
 
 @router.message(OrderForm.address)
 async def invalid_address(message: Message) -> None:
-    await message.answer(
-        "Напишите уточнение текстом или нажмите «Пропустить»."
-    )
+    await message.answer(t("need_note_text"))
 
 
 # ---------- Шаг 3. Телефон ----------
@@ -417,9 +398,7 @@ async def receive_contact(
 ) -> None:
 
     if message.contact.user_id != message.from_user.id:
-        await message.answer(
-            "Пожалуйста, отправьте свой номер телефона."
-        )
+        await message.answer(t("need_own_phone"))
         return
 
     phone = normalize_phone(
@@ -427,7 +406,7 @@ async def receive_contact(
     )
 
     if phone is None:
-        await message.answer("Неверный формат номера.")
+        await message.answer(t("bad_phone_format"))
         return
 
     await save_client_phone(
@@ -442,7 +421,7 @@ async def receive_contact(
 
 @router.message(
     OrderForm.phone,
-    F.text.startswith(KEEP_PHONE_PREFIX)
+    F.text.startswith(KEEP_PHONE_PREFIXES)
 )
 async def keep_saved_phone(
     message: Message,
@@ -453,9 +432,7 @@ async def keep_saved_phone(
     phone = data.get("saved_phone")
 
     if not phone:
-        await message.answer(
-            "Введите номер вручную или отправьте контакт кнопкой."
-        )
+        await message.answer(t("phone_enter_or_contact"))
         return
 
     await state.update_data(phone=phone)
@@ -472,9 +449,7 @@ async def receive_phone(
     phone = normalize_phone(message.text)
 
     if phone is None:
-        await message.answer(
-            "Неверный номер. Например: +7 777 123 45 67"
-        )
+        await message.answer(t("bad_phone_example"))
         return
 
     # Сохраняем в профиль в любом случае (решение №2 в сценариях)
@@ -490,16 +465,14 @@ async def receive_phone(
 
 @router.message(OrderForm.phone)
 async def invalid_phone(message: Message) -> None:
-    await message.answer(
-        "Отправьте номер кнопкой или введите текстом."
-    )
+    await message.answer(t("phone_use_button"))
 
 
 # ---------- Шаг 4. Комментарий ----------
 
 @router.message(
     OrderForm.comment,
-    F.text == NO_COMMENT_BUTTON
+    F.text.in_(NO_COMMENT_BUTTONS)
 )
 async def skip_comment(
     message: Message,
@@ -529,10 +502,7 @@ async def receive_comment(
 
 @router.message(OrderForm.comment)
 async def invalid_comment(message: Message) -> None:
-    await message.answer(
-        "Напишите комментарий или нажмите "
-        "«Без комментария»."
-    )
+    await message.answer(t("need_comment"))
 
 
 # ---------- Меню редактирования ----------
@@ -544,7 +514,7 @@ async def invalid_comment(message: Message) -> None:
 async def edit_order(callback: CallbackQuery) -> None:
 
     await callback.message.edit_text(
-        "✏️ <b>Что хотите изменить?</b>",
+        t("edit_title"),
         reply_markup=edit_keyboard(),
     )
 
@@ -570,8 +540,8 @@ async def edit_location(
     )
 
     await callback.message.answer(
-        "📍 Отправьте новую геолокацию кнопкой ниже:",
-        reply_markup=location_keyboard,
+        t("edit_location_prompt"),
+        reply_markup=location_keyboard(),
     )
 
     await callback.answer()
@@ -596,9 +566,8 @@ async def edit_address(
     )
 
     await callback.message.answer(
-        "🏠 Введите уточнение адреса (подъезд, этаж, квартира) "
-        "или нажмите «Пропустить»:",
-        reply_markup=address_note_keyboard,
+        t("edit_note_prompt"),
+        reply_markup=address_note_keyboard(),
     )
 
     await callback.answer()
@@ -623,9 +592,8 @@ async def edit_phone(
     )
 
     await callback.message.answer(
-        "📱 Введите новый номер телефона "
-        "или отправьте контакт через кнопку:",
-        reply_markup=phone_keyboard,
+        t("edit_phone_prompt"),
+        reply_markup=phone_keyboard(),
     )
 
     await callback.answer()
@@ -650,9 +618,8 @@ async def edit_comment(
     )
 
     await callback.message.answer(
-        "💬 Введите новый комментарий "
-        "или нажмите «Без комментария»:",
-        reply_markup=comment_keyboard,
+        t("edit_comment_prompt"),
+        reply_markup=comment_keyboard(),
     )
 
     await callback.answer()
@@ -683,10 +650,7 @@ async def back_to_summary(
 
 @router.message(OrderForm.confirm)
 async def invalid_confirm_input(message: Message) -> None:
-    await message.answer(
-        "Используйте кнопки «Подтвердить», "
-        "«Изменить» или «Отмена»."
-    )
+    await message.answer(t("use_buttons"))
 
 
 # ---------- Шаг 5. Сохранение заказа ----------
@@ -711,9 +675,7 @@ async def confirm_order(
     async with lock:
 
         if await state.get_state() != OrderForm.confirm.state:
-            await callback.answer(
-                "Заказ уже обрабатывается или оформлен."
-            )
+            await callback.answer(t("order_in_progress"))
             return
 
         data = await state.get_data()
@@ -731,10 +693,7 @@ async def confirm_order(
             if removed or not items:
 
                 if items:
-                    await callback.message.answer(
-                        "⚠️ Состав корзины изменился. "
-                        "Проверьте заказ ещё раз."
-                    )
+                    await callback.message.answer(t("cart_changed"))
 
                     await show_order_summary(
                         callback.message,
@@ -744,9 +703,8 @@ async def confirm_order(
                     await reset_checkout(state)
 
                     await callback.message.answer(
-                        "Товары больше недоступны. "
-                        "Выберите другие.",
-                        reply_markup=main_menu,
+                        t("items_gone"),
+                        reply_markup=main_menu(),
                     )
 
                 return
@@ -771,8 +729,7 @@ async def confirm_order(
             await state.set_state(OrderForm.confirm)
 
             await callback.message.answer(
-                "⚠️ Не удалось создать заказ. "
-                "Попробуйте ещё раз.",
+                t("order_create_failed"),
                 reply_markup=retry_keyboard(),
             )
 
@@ -780,15 +737,17 @@ async def confirm_order(
 
         await state.clear()
 
+        # Клиент видит номер среди своих заказов, а не общий номер заказа
+        client_number = await client_order_number(order.pk)
+
         try:
             await callback.message.edit_reply_markup(
                 reply_markup=None
             )
 
             await callback.message.answer(
-                f"✅ <b>Заказ №{order.number} создан!</b>\n\n"
-                "Заказ ожидает обработки оператором.",
-                reply_markup=main_menu,
+                t("order_created", number=client_number),
+                reply_markup=main_menu(),
             )
 
         except Exception:
@@ -803,20 +762,14 @@ async def confirm_order(
             if await send_order_invoice(
                 callback.message,
                 order.pk,
-                order.number,
+                client_number,
                 order.total - order.delivery_fee,
                 order.delivery_fee,
             ):
-                await callback.message.answer(
-                    "💳 Оплатить заказ можно счётом выше или позже "
-                    "в разделе «Мои заказы»."
-                )
+                await callback.message.answer(t("pay_hint"))
             elif not payment_available():
                 # Заглушка: оплата в боте ещё не подключена
-                await callback.message.answer(
-                    "💳 Онлайн-оплата скоро появится. "
-                    "Способ оплаты уточнит оператор."
-                )
+                await callback.message.answer(t("pay_soon"))
         except Exception:
             logger.exception(
                 "Заказ %s создан, но счёт не выставлен", order.pk
@@ -828,6 +781,6 @@ async def confirm_order(
 @router.callback_query(OrderCallback.filter())
 async def old_order_button(callback: CallbackQuery) -> None:
     await callback.answer(
-        "Эта кнопка больше неактуальна.",
+        t("old_button"),
         show_alert=True,
     )

@@ -6,11 +6,8 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-from bot.keyboards.main_menu import (
-    AI_BUTTON,
-    AI_BUTTON_LEGACY,
-    main_menu,
-)
+from bot.i18n import current_lang, t
+from bot.keyboards.main_menu import AI_BUTTONS, main_menu
 from bot.services.ai_agent import (
     MAX_HISTORY_MESSAGES,
     ask_ai,
@@ -25,7 +22,7 @@ logger = logging.getLogger(__name__)
 # ---------- Запуск AI-помощника ----------
 
 @router.message(Command("ai"))
-@router.message(F.text.in_({AI_BUTTON, AI_BUTTON_LEGACY}))
+@router.message(F.text.in_(AI_BUTTONS))
 async def start_ai(
     message: Message,
     state: FSMContext,
@@ -37,14 +34,7 @@ async def start_ai(
         ai_history=[],
     )
 
-    await message.answer(
-        "💬 <b>Виртуальный оператор Nurlight</b>\n\n"
-        "Привет! 👋 Я бот-помощник: подскажу по меню и ценам, "
-        "доставке и вашим заказам.\n\n"
-        "Просто напиши, что тебя интересует!\n\n"
-        "🧹 /clear — начать новый разговор\n"
-        "❌ /exit — завершить диалог"
-    )
+    await message.answer(t("ai_welcome"))
 
 
 # ---------- Очистка памяти AI ----------
@@ -60,10 +50,7 @@ async def clear_ai_memory(
         ai_history=[],
     )
 
-    await message.answer(
-        "🧹 <b>Память AI очищена!</b>\n\n"
-        "Можем начать разговор заново."
-    )
+    await message.answer(t("ai_cleared"))
 
 
 # ---------- Выход из AI ----------
@@ -81,9 +68,8 @@ async def stop_ai(
     )
 
     await message.answer(
-        "✅ AI-диалог завершён.\n"
-        "Можешь пользоваться обычным меню.",
-        reply_markup=main_menu,
+        t("ai_exit"),
+        reply_markup=main_menu(),
     )
 
 
@@ -128,6 +114,7 @@ async def ai_chat(
             question=message.text,
             history=history,
             client_context=orders_context,
+            language=current_lang.get(),
         )
 
         # Сохраняем только успешные ответы
@@ -160,7 +147,4 @@ async def ai_chat(
             "Ошибка AI-помощника Nurlight"
         )
 
-        await message.answer(
-            "⚠️ Произошла ошибка AI.\n"
-            "Пожалуйста, попробуйте позже."
-        )
+        await message.answer(t("ai_error"))

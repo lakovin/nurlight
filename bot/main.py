@@ -21,6 +21,7 @@ from bot.handlers import (  # noqa: E402
     payment,
     start,
 )
+from bot import middlewares  # noqa: E402
 from bot.services import notifications  # noqa: E402
 
 
@@ -42,6 +43,9 @@ async def main():
     )
 
     dp = Dispatcher()
+
+    # Язык клиента определяется для каждого сообщения и нажатия кнопки
+    middlewares.register(dp)
 
     # AI-обработчик ставим последним
     dp.include_routers(

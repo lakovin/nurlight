@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.conf import settings
 
+from bot.i18n import t
 from bot.services.validation import format_money
 
 
@@ -24,7 +25,7 @@ def delivery_text(fee: Decimal) -> str:
     """Строка про доставку для сводки и карточки заказа."""
 
     if fee == 0:
-        return "Доставка: бесплатно"
+        return t("delivery_free")
 
     _, free_from = rules()
-    return f"Доставка: {format_money(fee)} (бесплатно от {format_money(free_from)})"
+    return t("delivery_fee", fee=format_money(fee), free_from=format_money(free_from))
