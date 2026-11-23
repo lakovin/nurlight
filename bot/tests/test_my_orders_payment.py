@@ -1,7 +1,11 @@
+import os
+from unittest.mock import AsyncMock, patch
+
 from asgiref.sync import sync_to_async
 from delivery import payments
 from delivery.models import Order
 
+from bot.handlers.payment import demo_window_result
 from bot.services.my_orders import (
     cancel_by_client,
     client_order_number,
@@ -9,7 +13,13 @@ from bot.services.my_orders import (
     get_order_for_client,
     get_orders_context,
 )
-from bot.services.payment import can_invoice, demo_enabled, demo_pay
+from bot.services.payment import (
+    can_invoice,
+    demo_enabled,
+    demo_pay,
+    parse_window_data,
+    send_order_invoice,
+)
 from bot.tests.helpers import OTHER_TG_ID, TG_ID, BotTestCase
 
 
@@ -138,6 +148,66 @@ class PaymentTests(BotTestCase):
     async def test_cancelled_order_cannot_be_paid(self):
         order = await self.make_order(status=Order.Status.CANCELLED)
         self.assertIsNotNone(await demo_pay(TG_ID, order.pk))
+
+    def test_window_data_is_validated(self):
+        self.assertEqual(parse_window_data('{"order": 7, "result": "ok"}'), (7, "ok"))
+        self.assertEqual(parse_window_data('{"order": 7, "result": "declined"}'), (7, "declined"))
+
+        for bad in (
+            "", "hack", "[]", "null", "{}",
+            '{"order": "7", "result": "ok"}',
+            '{"order": true, "result": "ok"}',
+            '{"order": -1, "result": "ok"}',
+            '{"order": 99999999999999999999, "result": "ok"}',
+            '{"order": 7, "result": "free"}',
+            '{"order": 7, "result": ["ok"]}',
+        ):
+            self.assertIsNone(parse_window_data(bad), bad)
+
+    async def send_invoice(self, order):
+        message = AsyncMock()
+        sent = await send_order_invoice(
+            message, order.pk, "1", order.total - order.delivery_fee, order.delivery_fee
+        )
+        self.assertTrue(sent)
+        return message.answer.call_args.kwargs["reply_markup"]
+
+    async def test_window_button_opens_only_with_https_url(self):
+        order = await self.make_order()
+
+        with patch.dict(os.environ, {"PAYMENT_DEMO_URL": "https://example.com/pay/"}):
+            markup = await self.send_invoice(order)
+        url = markup.keyboard[0][0].web_app.url
+        self.assertTrue(url.startswith(f"https://example.com/pay/?o={order.pk}&n=1&sum="))
+        self.assertEqual(len(markup.keyboard), 4)  # главное меню осталось
+
+        # без адреса или без https — прежняя кнопка
+        for value in ("", "http://example.com"):
+            with patch.dict(os.environ, {"PAYMENT_DEMO_URL": value}):
+                markup = await self.send_invoice(order)
+            self.assertTrue(markup.inline_keyboard[0][0].callback_data.startswith("demopay"))
+
+    async def window_result(self, order, result, telegram_id=TG_ID):
+        message = AsyncMock()
+        message.from_user.id = telegram_id
+        message.web_app_data.data = f'{{"order": {order.pk}, "result": "{result}"}}'
+        await demo_window_result(message)
+        saved = await Order.objects.aget(pk=order.pk)
+        return saved.payment_status == Order.PaymentStatus.PAID
+
+    async def test_window_result_changes_only_own_order(self):
+        order = await self.make_order()
+        await self.make_client(OTHER_TG_ID)
+
+        self.assertFalse(await self.window_result(order, "declined"))
+        self.assertFalse(await self.window_result(order, "ok", OTHER_TG_ID))
+        self.assertTrue(await self.window_result(order, "ok"))
+
+    async def test_window_is_ignored_with_real_token(self):
+        order = await self.make_order()
+
+        with patch.dict(os.environ, {"PAYMENT_PROVIDER_TOKEN": "1:TEST:1"}):
+            self.assertFalse(await self.window_result(order, "ok"))
 
     async def test_check_before_payment_validates_amount(self):
         order = await self.make_order()

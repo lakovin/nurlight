@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<!-- Имитация оплаты. Реквизиты остаются в браузере: сетевые запросы запрещены (connect-src, form-action) -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://telegram.org; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<title>Nurlight: тестовая оплата</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&display=swap">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --bg: #ffffff; --field: #f7f2ec; --text: #1f1a17; --muted: #6e6259; --line: #eadfd2;
+    --primary: #f28c28; --sun: #f7d36b; --ink: #2a1605; --error: #c5281c;
+    --ease: cubic-bezier(.22, 1, .36, 1);
+  }
+  :root[data-theme="dark"] {
+    --bg: #1b1613; --field: #2a231e; --text: #fbf3ea; --muted: #b3a396; --line: #3d332c; --error: #ff8a7a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--text);
+         font: 16px/1.4 "Onest", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow-x: hidden; }
+  main { max-width: 400px; margin: 0 auto; padding: 16px 20px 24px; }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; border: 0; }
+
+  /* Карта: солнце с логотипа Nurlight восходит из угла */
+  .scene { perspective: 1100px; }
+  .card { position: relative; aspect-ratio: 1.66; transform-style: preserve-3d; transition: transform .6s var(--ease); }
+  .card.back { transform: rotateY(180deg); }
+  .face { position: absolute; inset: 0; border-radius: 20px; overflow: hidden; padding: 20px 22px;
+          backface-visibility: hidden; -webkit-backface-visibility: hidden;
+          background: var(--primary); color: var(--ink); display: flex; flex-direction: column; justify-content: space-between; }
+  .face::before, .face::after { content: ""; position: absolute; border-radius: 50%; }
+  .face::before { width: 92%; aspect-ratio: 1; right: -34%; top: -62%; background: #f9a94d; }
+  .face::after { width: 62%; aspect-ratio: 1; right: -19%; top: -37%; background: var(--sun); }
+  .face > * { position: relative; z-index: 1; }
+  .name { font-weight: 700; font-size: 21px; letter-spacing: -.02em; }
+  .digits { font-size: clamp(19px, 6vw, 24px); font-weight: 600; letter-spacing: .04em; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .bottom { display: flex; justify-content: space-between; align-items: end; font-variant-numeric: tabular-nums; }
+  .bottom small { display: block; font-size: 12px; }
+  .bottom b { font-weight: 600; font-size: 17px; }
+  #brand { font-weight: 700; font-size: 18px; min-height: 25px; }
+  .rear { transform: rotateY(180deg); justify-content: center; }
+  .rear::before, .rear::after { display: none; }
+  .stripe { position: absolute !important; left: 0; right: 0; top: 18%; height: 20%; background: var(--ink); }
+  .sign { margin-top: 18%; background: #fff6ea; border-radius: 8px; padding: 10px 14px; text-align: right; font-weight: 600;
+          letter-spacing: .12em; min-height: 44px; }
+
+  .order { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 18px 0 14px; }
+  .order span { color: var(--muted); }
+  .order b { font-size: 26px; font-weight: 700; letter-spacing: -.02em; white-space: nowrap; }
+
+  .fields { border-radius: 16px; background: var(--field); border: 1.5px solid var(--line); overflow: hidden; }
+  .fields label { display: block; padding: 10px 16px 9px; font-size: 13px; color: var(--muted); }
+  .fields label:focus-within { box-shadow: inset 0 -2.5px 0 var(--primary); }
+  .fields input { display: block; width: 100%; padding: 1px 0 0; border: 0; background: none; outline: none;
+                  color: var(--text); font-size: 18px; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .fields input::placeholder { color: var(--muted); opacity: .55; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; border-top: 1.5px solid var(--line); }
+  .row label + label { border-left: 1.5px solid var(--line); }
+  #error { color: var(--error); font-size: 14px; margin: 8px 2px 0; }
+  #error:empty { display: none; }
+
+  .main { width: 100%; min-height: 54px; margin-top: 14px; border-radius: 16px; background: var(--primary); color: var(--ink);
+          font-size: 17px; font-weight: 700; transition: transform .15s var(--ease), background-color .15s; }
+  .main:hover { background: #f79b40; }
+  .main:active { transform: scale(.98); }
+  .link { display: block; margin: 10px auto 0; padding: 8px 12px; background: none; color: var(--text); font-size: 15px; font-weight: 500;
+          text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--primary); }
+  :is(.main, .link):focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; }
+  .note { margin: 8px 0 0; text-align: center; font-size: 13px; color: var(--muted); }
+
+  /* Итог: солнце заливает экран */
+  .result { position: fixed; inset: 0; z-index: 5; display: none; flex-direction: column; align-items: center; justify-content: center;
+            padding: 24px; text-align: center; background: var(--bg); }
+  .result.on { display: flex; }
+  .disc { position: absolute; left: 50%; top: 50%; width: 120px; height: 120px; margin: -120px 0 0 -60px; border-radius: 50%;
+          background: var(--primary); transform: scale(0); }
+  .result.ok .disc { transform: scale(24); transition: transform .8s var(--ease); }
+  .result > *:not(.disc) { position: relative; }
+  .mark { width: 120px; height: 120px; margin-top: -60px; }
+  .mark circle, .mark path { fill: none; stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
+  .spin { stroke: var(--primary); stroke-dasharray: 90 220; transform-origin: center; animation: spin .9s linear infinite; }
+  .tick { stroke-dasharray: 120; stroke-dashoffset: 120; transition: stroke-dashoffset .5s .25s var(--ease); }
+  .tick { stroke: var(--ink); }
+  .cross { stroke: var(--error); display: none; }
+  .result.bad .cross { display: inline; }
+  .result.ok .tick { stroke-dashoffset: 0; }
+  .result:not(.wait) .spin { display: none; }
+  .result h1 { margin: 18px 0 4px; font-size: 25px; font-weight: 700; letter-spacing: -.02em; }
+  .result p { margin: 0; color: var(--muted); max-width: 300px; }
+  .result.ok { color: var(--ink); }
+  .result.ok p { color: var(--ink); }
+  .actions { width: 100%; max-width: 320px; margin-top: 14px; display: none; }
+  .result.bad .actions { display: block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .card, .result .disc, .tick { transition: none !important; } .spin { animation-duration: 2.5s; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="scene" aria-hidden="true">
+    <div class="card" id="card">
+      <div class="face">
+        <div class="name">Nurlight</div>
+        <div class="digits" id="c-number"></div>
+        <div class="bottom">
+          <div><small id="t-until"></small><b id="c-exp"></b></div>
+          <div id="brand"></div>
+        </div>
+      </div>
+      <div class="face rear"><div class="stripe"></div><div class="sign" id="c-cvc"></div></div>
+    </div>
+  </div>
+
+  <div class="order"><span id="t-order"></span><b id="sum"></b></div>
+
+  <form id="form" autocomplete="off" novalidate>
+    <div class="fields">
+      <label><span id="t-number"></span>
+        <input id="number" inputmode="numeric" autocomplete="off" maxlength="19" placeholder="0000 0000 0000 0000"></label>
+      <div class="row">
+        <label><span id="t-exp"></span>
+          <input id="exp" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="12/30"></label>
+        <label>CVC
+          <input id="cvc" type="password" inputmode="numeric" autocomplete="off" maxlength="3" placeholder="•••"></label>
+      </div>
+    </div>
+    <p id="error" role="alert"></p>
+    <button class="main" id="pay" type="submit"></button>
+  </form>
+  <button class="link" id="fill" type="button"></button>
+  <p class="note" id="t-test"></p>
+</main>
+
+<section class="result" id="result" aria-live="assertive">
+  <div class="disc"></div>
+  <svg class="mark" viewBox="0 0 120 120" aria-hidden="true">
+    <circle class="spin" cx="60" cy="60" r="48"/>
+    <path class="tick" d="M32 62 L52 82 L90 40"/>
+    <path class="cross" d="M38 38 L82 82 M82 38 L38 82"/>
+  </svg>
+  <h1 id="r-title"></h1>
+  <p id="r-text"></p>
+  <div class="actions">
+    <button class="main" id="again" type="button"></button>
+    <button class="link" id="leave" type="button"></button>
+  </div>
+</section>
+
+<script>
+(function () {
+  var TEXT = {
+    ru: { order: "Заказ №", number: "Номер карты", exp: "Срок действия", until: "Действует до", pay: "Оплатить ",
+          fill: "Заполнить случайной картой", test: "Тестовая оплата: деньги не списываются, данные никуда не отправляются. Настоящую карту не вводите.",
+          wait1: "Проверяем карту", wait2: "Проводим платёж", okTitle: "Оплачено", okText: "Возвращаемся в чат",
+          badTitle: "Банк отклонил платёж", badText: "Деньги не списаны. Попробуйте другую карту.",
+          again: "Ввести другую карту", leave: "Вернуться в чат",
+          eCard: "Введите 16 цифр номера карты.", eExp: "Укажите срок действия, который ещё не прошёл.", eCvc: "Введите 3 цифры CVC.",
+          eOpen: "Откройте окно кнопкой в боте Nurlight." },
+    kk: { order: "Тапсырыс №", number: "Карта нөмірі", exp: "Жарамдылық мерзімі", until: "Мерзімі", pay: "Төлеу ",
+          fill: "Кездейсоқ картамен толтыру", test: "Тест төлемі: ақша есептен шығарылмайды, деректер ешқайда жіберілмейді. Нағыз картаны енгізбеңіз.",
+          wait1: "Картаны тексеріп жатырмыз", wait2: "Төлем жүргізілуде", okTitle: "Төленді", okText: "Чатқа оралу",
+          badTitle: "Банк төлемнен бас тартты", badText: "Ақша шығарылған жоқ. Басқа картаны қолданып көріңіз.",
+          again: "Басқа карта енгізу", leave: "Чатқа оралу",
+          eCard: "Карта нөмірінің 16 санын енгізіңіз.", eExp: "Әлі өтпеген мерзімді көрсетіңіз.", eCvc: "CVC 3 санын енгізіңіз.",
+          eOpen: "Терезені Nurlight ботындағы түйме арқылы ашыңыз." },
+    en: { order: "Order #", number: "Card number", exp: "Expiry date", until: "Valid until", pay: "Pay ",
+          fill: "Fill in a random card", test: "Test payment: no money is charged and nothing is sent anywhere. Do not enter a real card.",
+          wait1: "Checking the card", wait2: "Processing the payment", okTitle: "Paid", okText: "Returning to the chat",
+          badTitle: "The bank declined the payment", badText: "No money was charged. Try another card.",
+          again: "Enter another card", leave: "Return to the chat",
+          eCard: "Enter the 16 digits of the card number.", eExp: "Enter an expiry date that has not passed.", eCvc: "Enter the 3 CVC digits.",
+          eOpen: "Open this window with the button in the Nurlight bot." }
+  };
+  // Подходит любой номер из 16 цифр. Номер с таким окончанием показывает отказ банка
+  var DECLINED_ENDING = "0002";
+
+  var params = new URLSearchParams(location.search);
+  var lang = params.get("lang");
+  var L = TEXT[lang] || TEXT.ru;
+  var sum = params.get("sum") || "";
+  var tg = window.Telegram && window.Telegram.WebApp;
+  var inTelegram = !!(tg && tg.platform && tg.platform !== "unknown");
+  function $(id) { return document.getElementById(id); }
+  function digits(s) { return s.replace(/\D/g, ""); }
+  function spaced(s) { return s.replace(/(.{4})(?=.)/g, "$1 "); }
+  function vibrate(kind) { try { tg.HapticFeedback.notificationOccurred(kind); } catch (e) { /* старый клиент */ } }
+
+  function applyTheme() {
+    var dark = inTelegram ? tg.colorScheme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.dataset.theme = dark ? "dark" : "light";
+    try {
+      tg.setHeaderColor(dark ? "#1b1613" : "#ffffff");
+      tg.setBackgroundColor(dark ? "#1b1613" : "#ffffff");
+    } catch (e) { /* старый клиент */ }
+  }
+
+  document.documentElement.lang = TEXT[lang] ? lang : "ru";
+  $("t-order").textContent = L.order + (params.get("n") || "");
+  $("sum").textContent = sum;
+  $("t-number").textContent = L.number;
+  $("t-exp").textContent = L.exp;
+  $("t-until").textContent = L.until;
+  $("pay").textContent = L.pay + sum;
+  $("fill").textContent = L.fill;
+  $("t-test").textContent = L.test;
+  $("again").textContent = L.again;
+  $("leave").textContent = L.leave;
+
+  function brand(number) {
+    if (/^4/.test(number)) return "Visa";
+    if (/^(5[1-5]|2[2-7])/.test(number)) return "Mastercard";
+    return "";
+  }
+
+  function drawCard() {
+    var number = digits($("number").value);
+    $("c-number").textContent = spaced((number + "••••••••••••••••").slice(0, 16));
+    $("c-exp").textContent = $("exp").value || "••/••";
+    $("c-cvc").textContent = $("cvc").value.replace(/./g, "•") || "CVC";
+    $("brand").textContent = brand(number);
+  }
+
+  $("number").oninput = function () {
+    this.value = spaced(digits(this.value).slice(0, 16));
+    drawCard();
+    if (digits(this.value).length === 16) $("exp").focus();
+  };
+  $("exp").oninput = function () {
+    var d = digits(this.value).slice(0, 4);
+    this.value = d.length > 2 ? d.slice(0, 2) + "/" + d.slice(2) : d;
+    drawCard();
+    if (d.length === 4) $("cvc").focus();
+  };
+  $("cvc").oninput = function () { this.value = digits(this.value); drawCard(); };
+  $("cvc").onfocus = function () { $("card").classList.add("back"); };
+  $("cvc").onblur = function () { $("card").classList.remove("back"); };
+
+  function luhnOk(number) {
+    var total = 0;
+    for (var i = 0; i < number.length; i++) {
+      var n = +number[number.length - 1 - i];
+      if (i % 2) { n *= 2; if (n > 9) n -= 9; }
+      total += n;
+    }
+    return total % 10 === 0;
+  }
+
+  // Контрольная цифра нарочно неверная: такой карты не может быть ни у кого
+  function randomCard() {
+    var number;
+    do {
+      number = Math.random() < .5 ? "4" : "5" + (1 + Math.floor(Math.random() * 5));
+      while (number.length < 16) number += Math.floor(Math.random() * 10);
+    } while (luhnOk(number) || number.slice(-4) === DECLINED_ENDING);
+    return number;
+  }
+
+  $("fill").onclick = function () {
+    var month = String(1 + Math.floor(Math.random() * 12)).padStart(2, "0");
+    var year = (new Date().getFullYear() + 1 + Math.floor(Math.random() * 4)) % 100;
+    $("number").value = spaced(randomCard());
+    $("exp").value = month + "/" + String(year).padStart(2, "0");
+    $("cvc").value = String(100 + Math.floor(Math.random() * 900));
+    $("error").textContent = "";
+    drawCard();
+  };
+
+  function expOk(value) {
+    var m = /^(\d\d)\/(\d\d)$/.exec(value);
+    return !!m && +m[1] >= 1 && +m[1] <= 12 && new Date(2000 + +m[2], +m[1], 1) > new Date();
+  }
+
+  function show(state, title, text) {
+    $("result").className = "result on " + state;
+    $("r-title").textContent = title;
+    $("r-text").textContent = text || "";
+  }
+
+  // Боту уходит только номер заказа и результат, без реквизитов. После этого Telegram закрывает окно
+  function send(result) {
+    tg.sendData(JSON.stringify({ order: Number(params.get("o")), result: result }));
+  }
+
+  function clear() {
+    $("number").value = $("exp").value = $("cvc").value = "";
+    drawCard();
+  }
+
+  $("form").onsubmit = function (event) {
+    event.preventDefault();
+    var number = digits($("number").value);
+    var error = number.length !== 16 ? L.eCard : !expOk($("exp").value) ? L.eExp
+      : $("cvc").value.length !== 3 ? L.eCvc : !inTelegram ? L.eOpen : "";
+    $("error").textContent = error;
+    if (error) return;
+
+    document.activeElement.blur();
+    clear();
+    show("wait", L.wait1);
+    setTimeout(function () { show("wait", L.wait2); }, 1100);
+    setTimeout(function () {
+      if (number.slice(-4) === DECLINED_ENDING) {
+        show("bad", L.badTitle, L.badText);
+        vibrate("error");
+        return;
+      }
+      show("ok", L.okTitle, L.okText);
+      vibrate("success");
+      setTimeout(function () { send("ok"); }, 1900);
+    }, 2200);
+  };
+
+  $("again").onclick = function () { $("result").className = "result"; $("number").focus(); };
+  $("leave").onclick = function () { send("declined"); };
+
+  drawCard();
+  applyTheme();
+  if (inTelegram) { tg.ready(); tg.expand(); tg.onEvent("themeChanged", applyTheme); }
+})();
+</script>
+</body>
+</html>

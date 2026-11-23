@@ -93,6 +93,7 @@ cd admin_panel; python manage.py test                     # панель
 | `GEMINI_API_KEY` | ключ Gemini для виртуального оператора |
 | `PAYMENT_PROVIDER_TOKEN` | токен платёжного провайдера с `TEST` (настоящая оплата; пусто — выключена) |
 | `PAYMENT_DEMO` | `1` — демо-оплата без списания денег (кнопка «Оплатить (тест)»), если нет токена |
+| `PAYMENT_DEMO_URL` | https-адрес страницы `landing/pay`: в демо-режиме открывает окно с тестовой картой вместо кнопки |
 | `DELIVERY_FEE`, `DELIVERY_FREE_FROM` | доставка: 500 ₸, бесплатно от 5 000 ₸ |
 | `DJANGO_*`, `SHOP_ENABLED` | настройки панели (см. `.env.example` и [docs/deploy.md](docs/deploy.md)) |
 
