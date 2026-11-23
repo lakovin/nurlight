@@ -13,7 +13,7 @@ from bot.keyboards.catalog import (
     product_keyboard,
     products_keyboard,
 )
-from bot.i18n import t
+from bot.i18n import localized, t
 from bot.keyboards.main_menu import CATALOG_BUTTONS
 from bot.services.catalog import get_product_any, list_categories, list_products
 
@@ -51,9 +51,10 @@ async def show_product(callback: CallbackQuery, callback_data: ProductCallback, 
     if product is None:
         await callback.answer(t("product_not_found"), show_alert=True)
         return
-    parts = [f"<b>{html.escape(product.name)}</b>"]
-    if product.description:
-        parts.append(html.escape(product.description))
+    parts = [f"<b>{html.escape(localized(product, 'name'))}</b>"]
+    description = localized(product, "description")
+    if description:
+        parts.append(html.escape(description))
     parts.append(t("product_price", price=f"{product.price:.0f}"))
     if not product.is_available:
         # Недоступный товар показываем, но заказать его нельзя

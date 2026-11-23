@@ -7,7 +7,7 @@ from aiogram.types import CallbackQuery, Message
 
 from bot.keyboards.cart import CartCallback, cart_keyboard
 from bot.keyboards.catalog import product_keyboard
-from bot.i18n import t
+from bot.i18n import localized, t
 from bot.keyboards.main_menu import CART_BUTTONS
 from bot.services.cart import get_cart_items
 from bot.services.catalog import get_product
@@ -23,7 +23,7 @@ def cart_text(items) -> str:
         total += subtotal
 
         lines.append(
-            f"{html.escape(product.name)}: "
+            f"{html.escape(localized(product, 'name'))}: "
             f"{qty} × {product.price:.0f} = {subtotal:.0f} ₸"
         )
 

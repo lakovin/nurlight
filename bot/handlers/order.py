@@ -7,7 +7,7 @@ from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
 
-from bot.i18n import t
+from bot.i18n import localized, t
 from bot.keyboards.cart import CartCallback
 from bot.keyboards.main_menu import ALL_MENU_BUTTONS, main_menu
 from bot.keyboards.order import (
@@ -152,7 +152,7 @@ async def show_order_summary(
         total += subtotal
 
         lines.append(
-            f"• {html.escape(product.name)} × {quantity} — "
+            f"• {html.escape(localized(product, 'name'))} × {quantity} — "
             f"{format_money(subtotal)}"
         )
 

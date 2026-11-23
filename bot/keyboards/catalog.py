@@ -1,7 +1,7 @@
 from aiogram.filters.callback_data import CallbackData
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from bot.i18n import t
+from bot.i18n import localized, t
 from delivery.models import Category, Product
 from bot.keyboards.cart import CartCallback
 
@@ -21,7 +21,7 @@ class BackToCategories(CallbackData, prefix="cats"):
 def categories_keyboard(categories: list[Category]):
     builder = InlineKeyboardBuilder()
     for category in categories:
-        builder.button(text=category.name, callback_data=CategoryCallback(id=category.id))
+        builder.button(text=localized(category, "name"), callback_data=CategoryCallback(id=category.id))
     builder.adjust(2)
     return builder.as_markup()
 
@@ -31,9 +31,9 @@ def products_keyboard(products: list[Product]):
     for product in products:
         # Цвет кнопки в Telegram не меняется, поэтому недоступный товар помечаем значком и текстом
         if product.is_available:
-            text = f"{product.name} — {product.price:.0f} ₸"
+            text = f"{localized(product, 'name')} — {product.price:.0f} ₸"
         else:
-            text = t("product_btn_unavailable", name=product.name)
+            text = t("product_btn_unavailable", name=localized(product, "name"))
         builder.button(text=text, callback_data=ProductCallback(id=product.id))
     builder.button(text=t("btn_to_categories"), callback_data=BackToCategories())
     builder.adjust(1)

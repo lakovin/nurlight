@@ -205,16 +205,27 @@ class ClientAdmin(admin.ModelAdmin):
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ("name", "sort_order")
+    list_display = ("name", "name_kk", "name_en", "sort_order")
     list_editable = ("sort_order",)
+    fieldsets = (
+        (None, {"fields": ("name", "sort_order")}),
+        (_("Переводы для бота"), {"fields": ("name_kk", "name_en")}),
+    )
 
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ("name", "category", "price", "is_available")
+    list_display = ("name", "name_kk", "name_en", "category", "price", "is_available")
     list_filter = ("category", "is_available")
     list_editable = ("price", "is_available")
-    search_fields = ("name",)
+    search_fields = ("name", "name_kk", "name_en")
+    fieldsets = (
+        (None, {"fields": ("name", "description", "category", "price", "is_available")}),
+        (
+            _("Переводы для бота"),
+            {"fields": ("name_kk", "description_kk", "name_en", "description_en")},
+        ),
+    )
 
 
 @admin.register(Courier)
