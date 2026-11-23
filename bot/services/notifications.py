@@ -13,7 +13,7 @@
 """
 import asyncio
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from aiogram import Bot
 from aiogram.exceptions import (
@@ -23,6 +23,8 @@ from aiogram.exceptions import (
 )
 from aiogram.types import InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from asgiref.sync import sync_to_async
+from django.db import close_old_connections
 from django.db.models import Q
 from django.utils import timezone
 
@@ -33,7 +35,11 @@ from delivery.models import Order
 
 logger = logging.getLogger(__name__)
 
-POLL_INTERVAL = 10  # секунд между проверками базы
+POLL_INTERVAL = 10  # секунд между проверками, пока есть свежие активные заказы
+# Если таких заказов нет, база не опрашивается и может заснуть: на бесплатном тарифе
+# Neon часы работы ограничены. Раньше бота разбудит любое сообщение клиента (wake)
+IDLE_INTERVAL = 3600
+FRESH_PERIOD = timedelta(hours=3)  # старые незакрытые заказы частого опроса не требуют
 MAX_ATTEMPTS = 3  # сколько раз пытаемся отправить одно уведомление
 
 ACTIVE_STATUSES = (
@@ -62,6 +68,28 @@ MESSAGES = {
 # order_id -> последний известный статус; order_id -> число неудачных попыток
 _known: dict[int, str] = {}
 _attempts: dict[int, int] = {}
+_wake_event = asyncio.Event()
+
+
+def wake() -> None:
+    """Просит проверить статусы сейчас, не дожидаясь конца паузы."""
+    _wake_event.set()
+
+
+async def _pause(seconds: float) -> None:
+    """Пауза, которую прерывает wake()."""
+    try:
+        await asyncio.wait_for(_wake_event.wait(), timeout=seconds)
+    except asyncio.TimeoutError:
+        pass
+
+
+def has_fresh_orders(rows: list[tuple], now: datetime) -> bool:
+    """Есть ли активные заказы, за которыми нужно следить часто."""
+    return any(
+        status in ACTIVE_STATUSES and created_at >= now - FRESH_PERIOD
+        for _, status, _, created_at, _ in rows
+    )
 
 
 def mark_known(order_id: int, status: str) -> None:
@@ -168,8 +196,14 @@ async def notify(
     return attempts >= MAX_ATTEMPTS
 
 
-async def poll_once(bot: Bot, started_at: datetime) -> None:
-    """Одна проверка базы: новые статусы → уведомления."""
+async def poll_once(bot: Bot, started_at: datetime) -> bool:
+    """Одна проверка базы: новые статусы → уведомления.
+
+    Возвращает True, если есть свежие активные заказы и проверять нужно часто.
+    """
+
+    # После обрыва связи Django сам не переподключается
+    await sync_to_async(close_old_connections)()
 
     # Заказ, который был активным, мог стать «Доставлен»/«Отменён»:
     # такой заказ уже не активен в базе, поэтому берём его по id
@@ -198,6 +232,8 @@ async def poll_once(bot: Bot, started_at: datetime) -> None:
         if await notify(bot, order_id, telegram_id, status, language):
             mark_known(order_id, status)
 
+    return has_fresh_orders(rows, timezone.now())
+
 
 async def run(bot: Bot) -> None:
     """Фоновая задача: работает, пока запущен бот."""
@@ -206,12 +242,18 @@ async def run(bot: Bot) -> None:
     logger.info("Уведомления о статусах заказов включены")
 
     while True:
+        _wake_event.clear()
+        busy = True  # при ошибке повторяем скоро
+
         try:
-            await poll_once(bot, started_at)
+            busy = await poll_once(bot, started_at)
         except asyncio.CancelledError:
             raise
         except Exception:
             # База (например, Neon после сна) или сеть недоступны — повторим
             logger.exception("Ошибка проверки статусов заказов")
 
-        await asyncio.sleep(POLL_INTERVAL)
+        if busy:
+            await asyncio.sleep(POLL_INTERVAL)
+        else:
+            await _pause(IDLE_INTERVAL)
