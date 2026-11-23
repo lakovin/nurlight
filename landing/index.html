@@ -13,6 +13,8 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <!-- Фон: едва заметный узор из иконок (как обои Telegram), сдвигается при прокрутке — app.js -->
+  <div class="doodles" aria-hidden="true"></div>
   <!-- Визитка Nurlight для бизнеса: ресторанам и кафе. Демо-бот — @nurlight_delivery_bot, связь — @bakaguy -->
   <header class="top">
     <a class="logo" href="#"><span class="logo-dot"></span>Nurlight</a>
@@ -69,14 +71,30 @@
   </section>
 
   <main>
-    <!-- Что получает ресторан: четыре части продукта -->
+    <!-- Что получает ресторан: четыре части продукта, оформлены как чеки -->
     <section class="section" id="product">
       <h2 class="section-title" data-i18n="product_title">Что получает ресторан</h2>
       <div class="features">
-        <div class="card feature"><h3 data-i18n="p1h">Бот для клиентов</h3><p data-i18n="p1p">Меню, корзина, оплата картой прямо в Telegram, статусы заказа. Русский, казахский и английский. ИИ-консультант отвечает на вопросы о меню и доставке.</p></div>
-        <div class="card feature"><h3 data-i18n="p2h">Панель оператора</h3><p data-i18n="p2p">Все заказы в одном списке: принять, назначить курьера, отменить. Геолокация клиента открывается на карте.</p></div>
-        <div class="card feature"><h3 data-i18n="p3h">Экран кухни</h3><p data-i18n="p3p">Повар видит только свои заказы и двигает их кнопками: «Готовится», «Упаковывается», «Готов».</p></div>
-        <div class="card feature"><h3 data-i18n="p4h">Статистика руководителя</h3><p data-i18n="p4p">Выручка, средний чек, популярные блюда и загрузка курьеров — за неделю, месяц или всё время.</p></div>
+        <div class="receipt"><div class="paper">
+          <div class="r-head"><span><span data-i18n="r_label">Чек</span> № 001</span><span>Nurlight</span></div>
+          <h3 data-i18n="p1h">Бот для клиентов</h3><p data-i18n="p1p">Меню, корзина, оплата картой прямо в Telegram, статусы заказа. Русский, казахский и английский. ИИ-консультант отвечает на вопросы о меню и доставке.</p>
+          <div class="r-total"><span data-i18n="r_total">Итого</span><span class="dots"></span><span data-i18n="r_included">входит в подписку</span></div>
+        </div></div>
+        <div class="receipt"><div class="paper">
+          <div class="r-head"><span><span data-i18n="r_label">Чек</span> № 002</span><span>Nurlight</span></div>
+          <h3 data-i18n="p2h">Панель оператора</h3><p data-i18n="p2p">Все заказы в одном списке: принять, назначить курьера, отменить. Геолокация клиента открывается на карте.</p>
+          <div class="r-total"><span data-i18n="r_total">Итого</span><span class="dots"></span><span data-i18n="r_included">входит в подписку</span></div>
+        </div></div>
+        <div class="receipt"><div class="paper">
+          <div class="r-head"><span><span data-i18n="r_label">Чек</span> № 003</span><span>Nurlight</span></div>
+          <h3 data-i18n="p3h">Экран кухни</h3><p data-i18n="p3p">Повар видит только свои заказы и двигает их кнопками: «Готовится», «Упаковывается», «Готов».</p>
+          <div class="r-total"><span data-i18n="r_total">Итого</span><span class="dots"></span><span data-i18n="r_included">входит в подписку</span></div>
+        </div></div>
+        <div class="receipt"><div class="paper">
+          <div class="r-head"><span><span data-i18n="r_label">Чек</span> № 004</span><span>Nurlight</span></div>
+          <h3 data-i18n="p4h">Статистика руководителя</h3><p data-i18n="p4p">Выручка, средний чек, популярные блюда и загрузка курьеров — за неделю, месяц или всё время.</p>
+          <div class="r-total"><span data-i18n="r_total">Итого</span><span class="dots"></span><span data-i18n="r_included">входит в подписку</span></div>
+        </div></div>
       </div>
     </section>
 

@@ -42,6 +42,7 @@ var I18N = {
     c4h: "Запуск", c4p: "Обучаем команду и проводим первые заказы вместе.",
     cta_h: "Посмотрите, как это работает", cta_p: "Откройте демо-бота и закажите что-нибудь — оплата тестовая, деньги не списываются.",
     foot: "© 2026 · Дипломный проект",
+    r_label: "Чек", r_total: "Итого", r_included: "входит в подписку",
     chat: {
       greet: "Здравствуйте! Я бот службы доставки Nurlight. Здесь можно выбрать блюда и оформить заказ.",
       kb: ["Меню", "Корзина", "Мои заказы"],
@@ -96,6 +97,7 @@ var I18N = {
     c4h: "Іске қосу", c4p: "Команданы оқытып, алғашқы тапсырыстарды бірге өткіземіз.",
     cta_h: "Қалай жұмыс істейтінін көріңіз", cta_p: "Демо-ботты ашып, бірдеңе тапсырыс беріңіз — төлем сынақ режимінде, ақша алынбайды.",
     foot: "© 2026 · Дипломдық жоба",
+    r_label: "Чек", r_total: "Барлығы", r_included: "жазылымға кіреді",
     chat: {
       greet: "Сәлеметсіз бе! Мен Nurlight жеткізу қызметінің ботымын. Мұнда тағам таңдап, тапсырыс беруге болады.",
       kb: ["Мәзір", "Себет", "Менің тапсырыстарым"],
@@ -150,6 +152,7 @@ var I18N = {
     c4h: "Launch", c4p: "We train your team and run the first orders together.",
     cta_h: "See how it works", cta_p: "Open the demo bot and order something — payment is in test mode, no money is charged.",
     foot: "© 2026 · Diploma project",
+    r_label: "Receipt", r_total: "Total", r_included: "included in the subscription",
     chat: {
       greet: "Hello! I am the Nurlight delivery bot. Here you can pick dishes and place an order.",
       kb: ["Menu", "Cart", "My orders"],
@@ -362,7 +365,7 @@ var Chat = (function () {
 // ---------- Секции ниже мягко появляются при прокрутке ----------
 (function () {
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var items = document.querySelectorAll(".section .card, .section-title, .cta");
+  var items = document.querySelectorAll(".section .card, .section .receipt, .section-title, .cta");
   if (!reduced && "IntersectionObserver" in window) {
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (e) {
@@ -371,4 +374,22 @@ var Chat = (function () {
     }, { threshold: 0.15 });
     items.forEach(function (el) { el.classList.add("will-show"); io.observe(el); });
   }
+})();
+
+// ---------- Фон с иконками: сдвигается медленнее страницы ----------
+// Двигается один слой через transform — это делает видеокарта, без пересчёта страницы.
+(function () {
+  var layer = document.querySelector(".doodles");
+  var TILE = 240; // размер плитки узора, см. style.css
+  if (!layer || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  var queued = false;
+  function move() {
+    queued = false;
+    var shift = (window.scrollY * 0.25) % TILE;
+    layer.style.transform = "translate3d(0," + (-shift).toFixed(1) + "px,0)";
+  }
+  window.addEventListener("scroll", function () {
+    if (!queued) { queued = true; requestAnimationFrame(move); }
+  }, { passive: true });
+  move();
 })();
