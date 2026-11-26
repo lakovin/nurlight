@@ -18,6 +18,7 @@ os.environ["DELIVERY_FEE"] = "500"
 os.environ["DELIVERY_FREE_FROM"] = "5000"
 os.environ["PAYMENT_PROVIDER_TOKEN"] = ""  # пустое значение: токен из .env не подтянется
 os.environ["PAYMENT_DEMO"] = "1"
+os.environ["PAYMENT_DEMO_URL"] = ""
 os.environ["GEMINI_API_KEY"] = ""
 
 from bot.services.db import setup_django  # noqa: E402

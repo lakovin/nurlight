@@ -8,18 +8,21 @@
   боевой токен от @BotFather);
 - токена нет, но PAYMENT_DEMO=1 — демо: кнопка «Оплатить (тест)» отмечает
   заказ оплаченным БЕЗ списания денег (для показа на защите; не включать
-  там, где оформляют настоящие заказы);
+  там, где оформляют настоящие заказы). Если задан и PAYMENT_DEMO_URL (https),
+  вместо кнопки открывается окно с тестовой картой (страница landing/pay);
 - ничего не задано — оплата выключена, бот работает как раньше.
 """
+import json
 import os
 import uuid
 from decimal import Decimal
+from urllib.parse import urlencode
 
 from aiogram.types import LabeledPrice, Message
 from asgiref.sync import sync_to_async
 
-from bot.i18n import t
-from bot.keyboards.payment import demo_pay_keyboard
+from bot.i18n import current_lang, t
+from bot.keyboards.payment import demo_pay_keyboard, demo_window_keyboard
 from bot.services.validation import format_money
 from delivery import payments
 from delivery.models import Order
@@ -40,6 +43,43 @@ def enabled() -> bool:
 def demo_enabled() -> bool:
     """Демо-оплата: только если нет настоящего токена."""
     return not enabled() and os.getenv("PAYMENT_DEMO") == "1"
+
+
+def demo_window_url(order_id: int, number: str, total: Decimal) -> str | None:
+    """Адрес окна тестовой оплаты. None — страница не задана (Telegram требует https)."""
+    base = os.getenv("PAYMENT_DEMO_URL", "").strip()
+
+    if not base.startswith("https://"):
+        return None
+
+    return base + "?" + urlencode({
+        "o": order_id,
+        "n": number,
+        "sum": format_money(total),
+        "lang": current_lang.get(),
+    })
+
+
+def parse_window_data(data: str) -> tuple[int, str] | None:
+    """Ответ окна оплаты → (id заказа, "ok" или "declined"). None — непонятные данные."""
+    try:
+        parsed = json.loads(data)
+    except ValueError:
+        return None
+
+    if not isinstance(parsed, dict):
+        return None
+
+    order_id, result = parsed.get("order"), parsed.get("result")
+
+    # type(), а не isinstance: True — тоже int
+    if type(order_id) is not int or not 0 < order_id < 2**63:
+        return None
+
+    if result not in ("ok", "declined"):
+        return None
+
+    return order_id, result
 
 
 def available() -> bool:
@@ -71,10 +111,16 @@ async def send_order_invoice(
         return False
 
     if demo_enabled():
-        await message.answer(
-            t("demo_invoice", number=number, amount=format_money(total)),
-            reply_markup=demo_pay_keyboard(order_id),
-        )
+        url = demo_window_url(order_id, number, total)
+        text = t("demo_invoice", number=number, amount=format_money(total))
+
+        if url:
+            text += "\n\n" + t("demo_window_hint")
+            keyboard = demo_window_keyboard(url)
+        else:
+            keyboard = demo_pay_keyboard(order_id)
+
+        await message.answer(text, reply_markup=keyboard)
         return True
 
     prices = [
