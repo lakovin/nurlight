@@ -1,8 +1,12 @@
 from datetime import timedelta
+from unittest.mock import patch
 
 from aiogram.exceptions import TelegramForbiddenError
 from aiogram.methods import SendMessage
+from asgiref.sync import sync_to_async
 from delivery.models import Order
+from django.db import connection
+from django.db.backends.sqlite3.base import DatabaseWrapper
 from django.utils import timezone
 
 from bot import tests_i18n
@@ -105,6 +109,60 @@ class NotificationTests(BotTestCase):
 
         await self.set_status(order, Order.Status.ACCEPTED)
         self.assertIn("тапсырыс қабылданды", self.bot.sent[0][1])
+
+    async def test_database_may_sleep_without_fresh_orders(self):
+        started = timezone.now()
+        self.assertFalse(await n.poll_once(self.bot, started))  # заказов нет
+
+        order = await self.make_order()
+        self.assertTrue(await n.poll_once(self.bot, started))  # свежий активный
+
+        # забытый «Новый» заказ не должен держать базу включённой
+        old = timezone.now() - n.FRESH_PERIOD - timedelta(minutes=1)
+        await Order.objects.filter(pk=order.pk).aupdate(created_at=old)
+        self.assertFalse(await n.poll_once(self.bot, started))
+
+        # завершённый заказ тоже
+        await Order.objects.filter(pk=order.pk).aupdate(
+            created_at=timezone.now(), status=Order.Status.DELIVERED
+        )
+        self.assertFalse(await n.poll_once(self.bot, started))
+
+    def check_connection_like_postgres(self):
+        """В SQLite is_usable() всегда True; здесь он проверяет связь, как в PostgreSQL."""
+
+        def is_usable(wrapper):
+            try:
+                wrapper.connection.execute("SELECT 1")
+            except Exception:
+                return False
+            return True
+
+        patcher = patch.object(DatabaseWrapper, "is_usable", is_usable)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    async def test_recovers_after_connection_is_lost(self):
+        self.check_connection_like_postgres()
+        await self.break_connection()
+        await n.poll_once(self.bot, timezone.now())  # не должно упасть
+
+    async def test_middleware_recovers_after_connection_is_lost(self):
+        from bot.middlewares import DatabaseMiddleware
+        from bot.services.catalog import list_categories
+
+        async def handler(event, data):
+            return await list_categories()
+
+        self.check_connection_like_postgres()
+        await self.break_connection()
+        self.assertEqual(len(await DatabaseMiddleware()(handler, None, {})), 1)
+
+    @staticmethod
+    @sync_to_async
+    def break_connection():
+        connection.ensure_connection()
+        connection.connection.close()  # как обрыв сети или сон базы
 
     def test_detect_changes_ignores_old_unknown_orders(self):
         started = timezone.now()
